@@ -8,6 +8,9 @@ import { useState, useEffect, createContext } from "react";
 import Index from "./pages/Index";
 import SignIn from "./pages/SignIn";
 import NotFound from "./pages/NotFound";
+import Checkout from "./pages/Checkout";
+import OrderConfirmation from "./pages/OrderConfirmation";
+import { CartProvider } from "./contexts/CartContext";
 
 // Create auth context
 export const AuthContext = createContext<{
@@ -67,18 +70,22 @@ const App = () => {
   return (
     <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner position="top-right" closeButton />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<ProtectedRoute element={<Index />} />} />
-              <Route path="/sign-in" element={<SignIn />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <CartProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner position="top-right" closeButton />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<ProtectedRoute element={<Index />} />} />
+                <Route path="/sign-in" element={<SignIn />} />
+                <Route path="/checkout" element={<ProtectedRoute element={<Checkout />} />} />
+                <Route path="/order-confirmation" element={<ProtectedRoute element={<OrderConfirmation />} />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </CartProvider>
       </QueryClientProvider>
     </AuthContext.Provider>
   );

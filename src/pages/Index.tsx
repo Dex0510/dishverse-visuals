@@ -3,9 +3,14 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { PlusCircle, Search, Share2, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import MenuCard from "@/components/MenuCard";
 import CreateMenuItemModal from "@/components/CreateMenuItemModal";
 import { toast } from "sonner";
+import ViewToggle from "@/components/ViewToggle";
+import CategoryFilter from "@/components/CategoryFilter";
+import MenuGrid from "@/components/MenuGrid";
+import MenuList from "@/components/MenuList";
+import CartDrawer from "@/components/CartDrawer";
+import CartButton from "@/components/CartButton";
 
 interface MenuItem {
   id: string;
@@ -44,12 +49,18 @@ const initialMenuItems: MenuItem[] = [
   }
 ];
 
+// Extract unique categories
+const allCategories = [...new Set(initialMenuItems.map(item => item.category))];
+
 const Index = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenuItems);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-
+  const [viewType, setViewType] = useState<"grid" | "list">("grid");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [showCartDrawer, setShowCartDrawer] = useState(false);
+  
   const handleCreateItem = () => {
     setEditingItem(null);
     setShowCreateModal(true);
@@ -78,41 +89,58 @@ const Index = () => {
       setMenuItems([...menuItems, item]);
       toast.success("Menu item created successfully");
     }
+    setShowCreateModal(false);
   };
 
-  const filteredMenuItems = menuItems.filter(item => 
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.ingredients.some(ing => ing.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  // Filter menu items based on search query and category
+  const filteredMenuItems = menuItems.filter(item => {
+    const matchesSearch = 
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.ingredients.some(ing => ing.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30">
       <Navbar />
       
+      {/* Cart Button (fixed position) */}
+      <div className="fixed right-6 bottom-6 z-40">
+        <CartButton onClick={() => setShowCartDrawer(true)} />
+      </div>
+      
+      {/* Cart Drawer */}
+      <CartDrawer 
+        isOpen={showCartDrawer} 
+        onClose={() => setShowCartDrawer(false)} 
+      />
+      
       <main className="container mx-auto px-6 pt-28 pb-20">
         {/* Hero Section */}
         <section className="text-center py-12 md:py-20 max-w-4xl mx-auto">
-          <span className="inline-block text-sm font-medium text-primary animate-fade-in">RESTAURANT MENU MANAGEMENT</span>
-          <h1 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight animate-slide-up">
+          <span className="inline-block text-sm font-medium text-primary">RESTAURANT MENU MANAGEMENT</span>
+          <h1 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
             Visualize Your Menu with <span className="text-primary">AI-Powered 3D</span>
           </h1>
-          <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto animate-fade-in delay-100">
+          <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
             Showcase your restaurant's dishes with stunning 3D visualizations. 
             Enhance your menu with detailed dish descriptions and AI-generated images.
           </p>
           <div className="mt-8 flex flex-wrap gap-4 justify-center">
             <button 
               onClick={handleCreateItem}
-              className="btn-primary inline-flex items-center animate-slide-up delay-200"
+              className="btn-primary inline-flex items-center"
             >
               <PlusCircle className="mr-2 h-5 w-5" />
               Add New Dish
             </button>
             <Link 
-              to="/menu" 
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200 animate-slide-up delay-300"
+              to="/" 
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
             >
               View Full Menu
               <ArrowRight className="ml-2 h-5 w-5" />
@@ -120,8 +148,9 @@ const Index = () => {
           </div>
         </section>
         
-        {/* Search and Filter Section */}
-        <section className="mb-8">
+        {/* Search, Category Filter, and View Toggle */}
+        <section className="mb-8 space-y-6">
+          {/* Search Input */}
           <div className="relative max-w-md mx-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <input
@@ -132,9 +161,23 @@ const Index = () => {
               className="w-full pl-10 py-2 pr-4 rounded-full border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
             />
           </div>
+          
+          {/* Category and View Controls */}
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <CategoryFilter 
+              categories={allCategories} 
+              selectedCategory={selectedCategory}
+              onCategoryChange={setSelectedCategory}
+            />
+            
+            <ViewToggle 
+              currentView={viewType} 
+              onViewChange={setViewType} 
+            />
+          </div>
         </section>
         
-        {/* Menu Items Grid */}
+        {/* Menu Items */}
         <section className="space-y-8">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-semibold">Menu Items</h2>
@@ -148,16 +191,21 @@ const Index = () => {
           </div>
           
           {filteredMenuItems.length > 0 ? (
-            <div className="grid grid-cols-1 gap-6">
-              {filteredMenuItems.map((item) => (
-                <MenuCard
-                  key={item.id}
-                  {...item}
-                  onEdit={handleEditItem}
-                  onDelete={handleDeleteItem}
-                />
-              ))}
-            </div>
+            viewType === "grid" ? (
+              <MenuGrid 
+                items={filteredMenuItems}
+                onEdit={handleEditItem}
+                onDelete={handleDeleteItem}
+                isAdmin={true}
+              />
+            ) : (
+              <MenuList 
+                items={filteredMenuItems}
+                onEdit={handleEditItem}
+                onDelete={handleDeleteItem}
+                isAdmin={true}
+              />
+            )
           ) : (
             <div className="text-center py-16 border border-dashed rounded-lg">
               <p className="text-muted-foreground mb-4">No menu items found</p>
