@@ -1,11 +1,13 @@
 
 import { useState, useEffect } from "react";
-import { X, Plus, Loader2 } from "lucide-react";
+import { X, Plus, Loader2, Sparkles } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import DishVisualizer from "./DishVisualizer";
+import { getSuggestedIngredients, generateDescription } from "../services/dishService";
 
 interface MenuItem {
   id: string;
@@ -45,6 +47,9 @@ const CreateMenuItemModal = ({
   const [newIngredient, setNewIngredient] = useState("");
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
+  const [isGettingSuggestions, setIsGettingSuggestions] = useState(false);
+  const [suggestedIngredients, setSuggestedIngredients] = useState<string[]>([]);
 
   useEffect(() => {
     if (editingItem) {
@@ -65,6 +70,7 @@ const CreateMenuItemModal = ({
     setCategory(categoryOptions[0]);
     setIngredients([]);
     setNewIngredient("");
+    setSuggestedIngredients([]);
   };
 
   const handleAddIngredient = () => {
@@ -82,6 +88,78 @@ const CreateMenuItemModal = ({
     if (e.key === "Enter") {
       e.preventDefault();
       handleAddIngredient();
+    }
+  };
+
+  const handleAddSuggestedIngredient = (ingredient: string) => {
+    if (!ingredients.includes(ingredient)) {
+      setIngredients([...ingredients, ingredient]);
+      // Remove from suggestions
+      setSuggestedIngredients(suggestedIngredients.filter(item => item !== ingredient));
+    }
+  };
+
+  const handleGetSuggestions = async () => {
+    if (!name) {
+      toast.error("Please enter a dish name first");
+      return;
+    }
+
+    setIsGettingSuggestions(true);
+    
+    try {
+      // In development mode, use mock data if API isn't available
+      if (process.env.NODE_ENV === 'development' && !process.env.VITE_USE_REAL_API) {
+        setTimeout(() => {
+          const mockSuggestions = ["garlic", "olive oil", "sea salt", "black pepper", "parsley"];
+          setSuggestedIngredients(
+            mockSuggestions.filter(item => !ingredients.includes(item))
+          );
+          setIsGettingSuggestions(false);
+          toast.success("Ingredient suggestions generated!");
+        }, 1500);
+      } else {
+        const suggestions = await getSuggestedIngredients(name, ingredients);
+        setSuggestedIngredients(
+          suggestions.filter(item => !ingredients.includes(item))
+        );
+        toast.success("Ingredient suggestions generated!");
+      }
+    } catch (error) {
+      console.error("Error getting suggestions:", error);
+      toast.error("Failed to get ingredient suggestions");
+    } finally {
+      setIsGettingSuggestions(false);
+    }
+  };
+
+  const handleGenerateDescription = async () => {
+    if (!name || ingredients.length === 0) {
+      toast.error("Please enter a dish name and at least one ingredient");
+      return;
+    }
+
+    setIsGeneratingDescription(true);
+    
+    try {
+      // In development mode, use mock data if API isn't available
+      if (process.env.NODE_ENV === 'development' && !process.env.VITE_USE_REAL_API) {
+        setTimeout(() => {
+          const mockDescription = `A delightful ${name} prepared with ${ingredients.join(', ')}. Enjoy a burst of flavor in every bite!`;
+          setDescription(mockDescription);
+          setIsGeneratingDescription(false);
+          toast.success("Description generated!");
+        }, 1500);
+      } else {
+        const generatedDescription = await generateDescription(name, ingredients);
+        setDescription(generatedDescription);
+        toast.success("Description generated!");
+      }
+    } catch (error) {
+      console.error("Error generating description:", error);
+      toast.error("Failed to generate description");
+    } finally {
+      setIsGeneratingDescription(false);
     }
   };
 
@@ -153,9 +231,31 @@ const CreateMenuItemModal = ({
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="description" className="text-sm font-medium">
-                  Description
-                </label>
+                <div className="flex justify-between items-center">
+                  <label htmlFor="description" className="text-sm font-medium">
+                    Description
+                  </label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGenerateDescription}
+                    disabled={isGeneratingDescription || !name || ingredients.length === 0}
+                    className="text-xs"
+                  >
+                    {isGeneratingDescription ? (
+                      <>
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-1 h-3 w-3" />
+                        Generate Description
+                      </>
+                    )}
+                  </Button>
+                </div>
                 <Textarea
                   id="description"
                   value={description}
@@ -203,9 +303,31 @@ const CreateMenuItemModal = ({
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="ingredients" className="text-sm font-medium">
-                  Ingredients
-                </label>
+                <div className="flex justify-between items-center">
+                  <label htmlFor="ingredients" className="text-sm font-medium">
+                    Ingredients
+                  </label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGetSuggestions}
+                    disabled={isGettingSuggestions || !name}
+                    className="text-xs"
+                  >
+                    {isGettingSuggestions ? (
+                      <>
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                        Getting Suggestions...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-1 h-3 w-3" />
+                        Get AI Suggestions
+                      </>
+                    )}
+                  </Button>
+                </div>
                 <div className="flex space-x-2">
                   <Input
                     id="ingredients"
@@ -223,6 +345,24 @@ const CreateMenuItemModal = ({
                     <Plus size={18} />
                   </Button>
                 </div>
+
+                {suggestedIngredients.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-xs font-medium text-primary mb-1">Suggested Ingredients:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {suggestedIngredients.map((ingredient, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handleAddSuggestedIngredient(ingredient)}
+                          className="text-xs px-2 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-full transition-colors"
+                        >
+                          + {ingredient}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex flex-wrap gap-2 mt-2">
                   {ingredients.map((ingredient, index) => (
@@ -273,6 +413,7 @@ const CreateMenuItemModal = ({
               <DishVisualizer
                 dishName={name || "New Dish"}
                 ingredients={ingredients}
+                description={description}
                 className="w-full aspect-square"
               />
             </div>
