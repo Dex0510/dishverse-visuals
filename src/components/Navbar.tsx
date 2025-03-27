@@ -1,11 +1,17 @@
 
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Menu, X, ChefHat } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { Menu, X, ChefHat, ShoppingCart, LayoutDashboard } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useCart } from "@/contexts/CartContext";
+import CartButton from "@/components/CartButton";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showCartDrawer, setShowCartDrawer] = useState(false);
+  const location = useLocation();
+  const { itemCount } = useCart();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -38,29 +44,38 @@ const Navbar = () => {
           <nav className="hidden md:flex items-center space-x-8">
             <Link
               to="/"
-              className="text-foreground/80 hover:text-primary transition-colors duration-200"
-            >
-              Home
-            </Link>
-            <Link
-              to="/menu"
-              className="text-foreground/80 hover:text-primary transition-colors duration-200"
+              className={`text-foreground/80 hover:text-primary transition-colors duration-200 ${
+                location.pathname === "/" && "text-primary font-medium"
+              }`}
             >
               Menu
             </Link>
-            <button className="btn-primary">
-              Sign In
-            </button>
+            <Link
+              to="/dashboard"
+              className={`text-foreground/80 hover:text-primary transition-colors duration-200 ${
+                location.pathname.includes("/dashboard") && "text-primary font-medium"
+              }`}
+            >
+              <span className="flex items-center gap-1">
+                <LayoutDashboard className="h-4 w-4" />
+                Dashboard
+              </span>
+            </Link>
+            <CartButton onClick={() => setShowCartDrawer(true)} />
           </nav>
 
           {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden text-foreground"
-            aria-label="Toggle menu"
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <CartButton onClick={() => setShowCartDrawer(true)} />
+            <Button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              variant="ghost"
+              size="icon"
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -70,24 +85,25 @@ const Navbar = () => {
           <div className="glass-card animate-fade-in px-6 py-6 flex flex-col space-y-4">
             <Link
               to="/"
-              className="text-foreground/80 hover:text-primary py-2 transition-colors duration-200"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Home
-            </Link>
-            <Link
-              to="/menu"
-              className="text-foreground/80 hover:text-primary py-2 transition-colors duration-200"
+              className={`text-foreground/80 hover:text-primary py-2 transition-colors duration-200 ${
+                location.pathname === "/" && "text-primary font-medium"
+              }`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Menu
             </Link>
-            <button
-              className="btn-primary w-full mt-2"
+            <Link
+              to="/dashboard"
+              className={`text-foreground/80 hover:text-primary py-2 transition-colors duration-200 ${
+                location.pathname.includes("/dashboard") && "text-primary font-medium"
+              }`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Sign In
-            </button>
+              <span className="flex items-center gap-1">
+                <LayoutDashboard className="h-4 w-4" />
+                Dashboard
+              </span>
+            </Link>
           </div>
         </div>
       )}
