@@ -1,5 +1,5 @@
 
-import { AxiosInstance, AxiosResponse } from 'axios';
+import { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
 // Mock data
 const mockTables = [
@@ -41,14 +41,14 @@ const mockHandlers: Record<string, (config: any) => AxiosResponse<any>> = {
     status: 200, 
     statusText: 'OK',
     headers: {},
-    config: {}
+    config: {} as InternalAxiosRequestConfig,
   }),
   'GET /sections': () => ({ 
     data: mockSections,
     status: 200, 
     statusText: 'OK',
     headers: {},
-    config: {}
+    config: {} as InternalAxiosRequestConfig,
   }),
   // Add more mock endpoints as needed
 };

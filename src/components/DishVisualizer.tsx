@@ -5,12 +5,14 @@ import { cn } from "@/lib/utils";
 interface DishVisualizerProps {
   dishName: string;
   ingredients: string[];
+  description?: string; // Make description optional
   className?: string;
 }
 
 const DishVisualizer: React.FC<DishVisualizerProps> = ({
   dishName,
   ingredients,
+  description,
   className,
 }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -92,6 +94,11 @@ const DishVisualizer: React.FC<DishVisualizerProps> = ({
           <div className="text-sm font-medium text-muted-foreground max-w-[80%]">
             {dishName}
           </div>
+          {description && (
+            <div className="text-xs mt-2 text-muted-foreground max-w-[80%] line-clamp-3">
+              {description}
+            </div>
+          )}
         </div>
       </div>
     );

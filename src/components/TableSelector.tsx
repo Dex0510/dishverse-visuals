@@ -47,30 +47,27 @@ const TableSelector: React.FC<TableSelectorProps> = ({
           {
             id: "main",
             name: "Main Floor",
-            capacity: 40,
             tables: [
-              { id: "1", name: "Table 1", capacity: 4, status: "available", section: "main" },
-              { id: "2", name: "Table 2", capacity: 2, status: "occupied", section: "main" },
-              { id: "3", name: "Table 3", capacity: 6, status: "available", section: "main" },
-              { id: "4", name: "Table 4", capacity: 4, status: "reserved", section: "main" },
+              { id: "1", name: "Table 1", capacity: 4, status: "available" as const, section: "main" },
+              { id: "2", name: "Table 2", capacity: 2, status: "occupied" as const, section: "main" },
+              { id: "3", name: "Table 3", capacity: 6, status: "available" as const, section: "main" },
+              { id: "4", name: "Table 4", capacity: 4, status: "reserved" as const, section: "main" },
             ],
           },
           {
             id: "outdoor",
             name: "Outdoor Patio",
-            capacity: 20,
             tables: [
-              { id: "5", name: "Table 5", capacity: 4, status: "available", section: "outdoor" },
-              { id: "6", name: "Table 6", capacity: 4, status: "cleaning", section: "outdoor" },
+              { id: "5", name: "Table 5", capacity: 4, status: "available" as const, section: "outdoor" },
+              { id: "6", name: "Table 6", capacity: 4, status: "cleaning" as const, section: "outdoor" },
             ],
           },
           {
             id: "private",
             name: "Private Room",
-            capacity: 12,
             tables: [
-              { id: "7", name: "Table 7", capacity: 8, status: "available", section: "private" },
-              { id: "8", name: "Table 8", capacity: 4, status: "reserved", section: "private" },
+              { id: "7", name: "Table 7", capacity: 8, status: "available" as const, section: "private" },
+              { id: "8", name: "Table 8", capacity: 4, status: "reserved" as const, section: "private" },
             ],
           },
         ];
