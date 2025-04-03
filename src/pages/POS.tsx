@@ -1,6 +1,18 @@
 
 import { useState } from "react";
-import { Search, Coffee, Pizza, Soup, Cake, Beef, Salad, Plus, Minus, Trash2, ShoppingCart } from "lucide-react";
+import { 
+  Search, 
+  Coffee, 
+  Pizza, 
+  Soup, 
+  Cake, 
+  Beef, 
+  Salad, 
+  Plus, 
+  Minus, 
+  Trash2, 
+  ShoppingCart as ShoppingCartIcon 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -223,7 +235,7 @@ const POS = () => {
         <div className="flex-1 overflow-y-auto p-4">
           {cart.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-4">
-              <ShoppingCart className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
+              <ShoppingCartIcon className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
               <h3 className="font-medium mb-1">No items in order</h3>
               <p className="text-sm text-muted-foreground">Select menu items to add to the current order.</p>
             </div>
