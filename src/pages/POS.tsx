@@ -19,6 +19,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import DishVisualizer from "@/components/DishVisualizer";
+import TableSelector from "@/components/TableSelector";
+import { toast } from "sonner";
 
 // Mock data for menu items
 const menuItems = [
@@ -93,7 +95,7 @@ const POS = () => {
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [activeTable, setActiveTable] = useState("Table 4");
+  const [activeTable, setActiveTable] = useState("Select Table");
   
   // Filter menu items based on category and search query
   const filteredItems = menuItems.filter(item => {
@@ -144,6 +146,38 @@ const POS = () => {
   const tax = subtotal * 0.1; // 10% tax
   const total = subtotal + tax;
 
+  // Handle payment process
+  const handlePayment = () => {
+    if (activeTable === "Select Table") {
+      toast.error("Please select a table first");
+      return;
+    }
+
+    if (cart.length === 0) {
+      toast.error("Cart is empty. Add items before proceeding to payment");
+      return;
+    }
+
+    toast.success("Order placed successfully!");
+    setCart([]);
+    setActiveTable("Select Table");
+  };
+
+  // Handle save order
+  const handleSaveOrder = () => {
+    if (activeTable === "Select Table") {
+      toast.error("Please select a table first");
+      return;
+    }
+
+    if (cart.length === 0) {
+      toast.error("Cart is empty. Add items before saving");
+      return;
+    }
+
+    toast.success("Order saved successfully!");
+  };
+
   return (
     <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
       {/* Menu Section */}
@@ -154,22 +188,23 @@ const POS = () => {
             <p className="text-muted-foreground">Create and manage orders</p>
           </div>
           
-          <div className="flex items-center gap-2">
-            <div className="relative">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:flex-initial">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input 
                 type="search" 
                 placeholder="Search menu..." 
-                className="pl-9 w-[200px] lg:w-[300px]"
+                className="pl-9 w-full sm:w-[200px] lg:w-[300px]"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             
             <div className="flex-shrink-0">
-              <Button variant="outline" onClick={() => setActiveTable("Table Select")}>
-                {activeTable}
-              </Button>
+              <TableSelector 
+                selectedTable={activeTable} 
+                onSelectTable={setActiveTable} 
+              />
             </div>
           </div>
         </div>
@@ -228,7 +263,7 @@ const POS = () => {
       <div className="w-full sm:w-96 flex-shrink-0 border-l bg-card overflow-hidden flex flex-col">
         <div className="p-4 border-b">
           <h2 className="text-lg font-medium">Current Order</h2>
-          <p className="text-sm text-muted-foreground">{activeTable} • Order #4721</p>
+          <p className="text-sm text-muted-foreground">{activeTable} • Order #{Math.floor(Math.random() * 10000)}</p>
         </div>
         
         {/* Cart Items */}
@@ -301,8 +336,8 @@ const POS = () => {
           </div>
           
           <div className="grid grid-cols-2 gap-2 mt-4">
-            <Button variant="outline">Save Order</Button>
-            <Button>Payment</Button>
+            <Button variant="outline" onClick={handleSaveOrder}>Save Order</Button>
+            <Button onClick={handlePayment}>Payment</Button>
           </div>
         </div>
       </div>

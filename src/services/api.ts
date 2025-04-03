@@ -1,5 +1,6 @@
 
 import axios from 'axios';
+import setupMockMiddleware from './mockMiddleware';
 
 // Base API URL - in a real app, this would be in an environment variable
 const API_URL = 'http://localhost:8000';
@@ -11,6 +12,9 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Setup mock middleware to handle API calls when backend is unavailable
+setupMockMiddleware(apiClient);
 
 // Add request interceptor for auth token
 apiClient.interceptors.request.use(
@@ -28,6 +32,14 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
+    // If the error doesn't have a response, it's a network error
+    if (!error.response) {
+      console.error('Network error or server unreachable.');
+      return Promise.reject(
+        new Error('Cannot connect to server. Please check your internet connection.')
+      );
+    }
+    
     const originalRequest = error.config;
     
     // If 401 unauthorized and not already retrying

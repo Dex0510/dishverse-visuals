@@ -132,7 +132,9 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
   }
 
   // Save to localStorage
-  localStorage.setItem("cart", JSON.stringify(newState));
+  if (typeof window !== "undefined") {
+    localStorage.setItem("cart", JSON.stringify(newState));
+  }
   
   return newState;
 };

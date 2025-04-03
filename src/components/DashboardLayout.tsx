@@ -1,14 +1,17 @@
 
 import { useState } from "react";
-import { Outlet } from "react-router-dom";
-import { Menu, Bell } from "lucide-react";
+import { Outlet, useNavigate } from "react-router-dom";
+import { Menu, Bell, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import CartDrawer from "@/components/CartDrawer";
+import { useCart } from "@/contexts/CartContext";
 
 const DashboardLayout = () => {
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [showCartDrawer, setShowCartDrawer] = useState(false);
+  const { itemCount } = useCart();
+  const navigate = useNavigate();
 
   return (
     <div className="flex h-screen bg-background">
@@ -45,6 +48,20 @@ const DashboardLayout = () => {
           <h1 className="text-lg font-medium">Restaurant Management</h1>
           
           <div className="ml-auto flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="relative"
+              onClick={() => setShowCartDrawer(true)}
+              aria-label="Shopping cart"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {itemCount > 0 && (
+                <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
+                  {itemCount}
+                </div>
+              )}
+            </Button>
             <Button 
               variant="ghost" 
               size="icon" 
