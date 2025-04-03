@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Search, Coffee, Pizza, Soup, Cake, Beef, Salad, Plus, Minus, Trash2 } from "lucide-react";
+import { Search, Coffee, Pizza, Soup, Cake, Beef, Salad, Plus, Minus, Trash2, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
