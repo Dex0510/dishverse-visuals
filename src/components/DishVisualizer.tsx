@@ -1,11 +1,12 @@
 
 import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { generate3DImage } from "@/services/dishService";
 
 interface DishVisualizerProps {
   dishName: string;
   ingredients: string[];
-  description?: string; // Make description optional
+  description?: string;
   className?: string;
 }
 
@@ -41,9 +42,22 @@ const DishVisualizer: React.FC<DishVisualizerProps> = ({
     const fetchImage = async () => {
       try {
         setIsLoading(true);
-        // Here we're just using a placeholder as we don't have a real image API
-        // In a real app, you'd call an actual image generation API
-        createPlaceholderImage();
+        
+        if (dishName && ingredients.length > 0) {
+          const imageUrl = await generate3DImage({ 
+            dish_name: dishName, 
+            ingredients: ingredients,
+            description: description 
+          });
+          
+          if (imageUrl) {
+            setImageUrl(imageUrl);
+          } else {
+            createPlaceholderImage();
+          }
+        } else {
+          createPlaceholderImage();
+        }
       } catch (err) {
         console.error("Failed to generate image:", err);
         setError("Failed to load image");
@@ -54,7 +68,7 @@ const DishVisualizer: React.FC<DishVisualizerProps> = ({
     };
 
     fetchImage();
-  }, [dishName, ingredients]);
+  }, [dishName, ingredients, description]);
 
   // Get the first letter of each word in the dish name
   const initials = dishName
