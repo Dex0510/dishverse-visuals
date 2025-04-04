@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +55,7 @@ import {
   Clock,
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { debugLog } from "@/utils/debugHelpers";
 
 // Mock data for tables
 const initialTables = [
