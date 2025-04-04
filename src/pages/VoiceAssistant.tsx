@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Mic, MicOff, Volume2, VolumeX, Trash2, Send, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
@@ -69,8 +68,8 @@ const VoiceAssistant = () => {
 
     // Initialize speech recognition
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
+      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognitionAPI();
       recognitionRef.current.continuous = true;
       recognitionRef.current.interimResults = true;
       recognitionRef.current.lang = 'en-US';
@@ -195,7 +194,7 @@ const VoiceAssistant = () => {
       setTranscript("");
     }
   };
-
+  
   const processUserInput = (input: string) => {
     setIsLoading(true);
     const normalizedInput = input.toLowerCase();
@@ -288,7 +287,7 @@ const VoiceAssistant = () => {
     speak("Your order has been submitted. Thank you!");
     setCurrentOrder([]);
   };
-
+  
   return (
     <div className="flex flex-col h-screen bg-background">
       <header className="border-b py-4 px-6 bg-card">

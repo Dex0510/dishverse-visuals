@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -428,7 +427,7 @@ const TableManagement = () => {
                   value={filterStatus}
                   onValueChange={setFilterStatus}
                 >
-                  <SelectTrigger id="status-filter-trigger">
+                  <SelectTrigger id="status-filter-trigger" className="w-[180px]">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -445,7 +444,7 @@ const TableManagement = () => {
                   value={filterLocation}
                   onValueChange={setFilterLocation}
                 >
-                  <SelectTrigger id="location-filter-trigger">
+                  <SelectTrigger id="location-filter-trigger" className="w-[180px]">
                     <SelectValue placeholder="Location" />
                   </SelectTrigger>
                   <SelectContent>
