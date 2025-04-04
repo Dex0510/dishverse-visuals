@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -427,7 +428,7 @@ const TableManagement = () => {
                   value={filterStatus}
                   onValueChange={setFilterStatus}
                 >
-                  <SelectTrigger id="status-filter">
+                  <SelectTrigger id="status-filter-trigger">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -444,7 +445,7 @@ const TableManagement = () => {
                   value={filterLocation}
                   onValueChange={setFilterLocation}
                 >
-                  <SelectTrigger id="location-filter">
+                  <SelectTrigger id="location-filter-trigger">
                     <SelectValue placeholder="Location" />
                   </SelectTrigger>
                   <SelectContent>
@@ -606,7 +607,7 @@ const TableManagement = () => {
                   handleSelectChange("capacity", value)
                 }
               >
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger id="capacity-select" className="col-span-3">
                   <SelectValue placeholder="Select capacity" />
                 </SelectTrigger>
                 <SelectContent>
@@ -626,7 +627,7 @@ const TableManagement = () => {
                 value={formData.status}
                 onValueChange={(value) => handleSelectChange("status", value)}
               >
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger id="status-select" className="col-span-3">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -646,7 +647,7 @@ const TableManagement = () => {
                 value={formData.location}
                 onValueChange={(value) => handleSelectChange("location", value)}
               >
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger id="location-select" className="col-span-3">
                   <SelectValue placeholder="Select location" />
                 </SelectTrigger>
                 <SelectContent>
@@ -700,7 +701,7 @@ const TableManagement = () => {
                   handleSelectChange("capacity", value)
                 }
               >
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger id="edit-capacity-select" className="col-span-3">
                   <SelectValue placeholder="Select capacity" />
                 </SelectTrigger>
                 <SelectContent>
@@ -720,7 +721,7 @@ const TableManagement = () => {
                 value={formData.status}
                 onValueChange={(value) => handleSelectChange("status", value)}
               >
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger id="edit-status-select" className="col-span-3">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -740,7 +741,7 @@ const TableManagement = () => {
                 value={formData.location}
                 onValueChange={(value) => handleSelectChange("location", value)}
               >
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger id="edit-location-select" className="col-span-3">
                   <SelectValue placeholder="Select location" />
                 </SelectTrigger>
                 <SelectContent>
