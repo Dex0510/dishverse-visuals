@@ -11,7 +11,8 @@ import {
   Map,
   SlidersHorizontal,
   Clock,
-  Mic
+  Mic,
+  Award
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -62,6 +63,11 @@ export const dashboardLinks: SidebarNavItem[] = [
     title: "Customers",
     href: "/customers",
     icon: <Users className="mr-2 h-4 w-4" />,
+  },
+  {
+    title: "Rewards & Challenges",
+    href: "/rewards",
+    icon: <Award className="mr-2 h-4 w-4" />,
   },
   {
     title: "Voice Assistant",

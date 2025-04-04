@@ -1,9 +1,11 @@
+
 import React, { useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   useNavigate,
+  Outlet
 } from "react-router-dom";
 import { Toaster } from "sonner";
 
@@ -26,26 +28,23 @@ import RestaurantMap from "./components/FloorMap/RestaurantMap";
 import WaitlistManagement from "@/pages/WaitlistManagement";
 import RestaurantMapPage from "./pages/RestaurantMapPage";
 import DashboardSidebar from "./components/DashboardSidebar";
+import Rewards from "./pages/Rewards";
 
-const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
-  const { currentUser } = useAuth();
+const ProtectedRoute = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!currentUser) {
+    if (!user) {
       navigate("/signin");
     }
-  }, [currentUser, navigate]);
+  }, [user, navigate]);
 
-  return currentUser ? <>{children}</> : null;
+  return user ? <Outlet /> : null;
 };
 
 function App() {
-  const { initializeAuth } = useAuth();
-
-  useEffect(() => {
-    initializeAuth();
-  }, [initializeAuth]);
+  const { user } = useAuth();
 
   return (
     <>
@@ -68,6 +67,7 @@ function App() {
             <Route path="/reports" element={<Reports />} />
             <Route path="/voice-assistant" element={<VoiceAssistant />} />
             <Route path="/map" element={<RestaurantMapPage />} />
+            <Route path="/rewards" element={<Rewards />} />
           </Route>
           
           {/* Order flow routes */}
