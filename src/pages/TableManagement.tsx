@@ -1,12 +1,11 @@
 
 import { useState } from "react";
-import { Calendar as CalendarIcon, Clock, Users, Plus, MoreHorizontal, CheckCircle, XCircle } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Users, Plus, MoreHorizontal, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,17 +29,18 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import RestaurantMap from "@/components/FloorMap/RestaurantMap";
 
 // Mock data for tables
 const tables = [
-  { id: 1, name: "Table 1", capacity: 2, status: "available", section: "Main" },
-  { id: 2, name: "Table 2", capacity: 4, status: "occupied", section: "Main" },
-  { id: 3, name: "Table 3", capacity: 6, status: "reserved", section: "Main" },
-  { id: 4, name: "Table 4", capacity: 2, status: "available", section: "Main" },
-  { id: 5, name: "Table 5", capacity: 4, status: "occupied", section: "Patio" },
-  { id: 6, name: "Table 6", capacity: 2, status: "available", section: "Patio" },
-  { id: 7, name: "Table 7", capacity: 8, status: "reserved", section: "Private" },
-  { id: 8, name: "Table 8", capacity: 4, status: "available", section: "Private" },
+  { id: "1", name: "Table 1", capacity: 2, status: "available", section: "Main" },
+  { id: "2", name: "Table 2", capacity: 4, status: "occupied", section: "Main" },
+  { id: "3", name: "Table 3", capacity: 6, status: "reserved", section: "Main" },
+  { id: "4", name: "Table 4", capacity: 2, status: "available", section: "Main" },
+  { id: "5", name: "Table 5", capacity: 4, status: "occupied", section: "Patio" },
+  { id: "6", name: "Table 6", capacity: 2, status: "available", section: "Patio" },
+  { id: "7", name: "Table 7", capacity: 8, status: "reserved", section: "Private" },
+  { id: "8", name: "Table 8", capacity: 4, status: "available", section: "Private" },
 ];
 
 // Mock data for reservations
@@ -95,6 +95,7 @@ const TableManagement = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [section, setSection] = useState("all");
   const [isNewReservationOpen, setIsNewReservationOpen] = useState(false);
+  const [isRestaurantMapOpen, setIsRestaurantMapOpen] = useState(false);
   
   // Filter tables based on section
   const filteredTables = section === "all" 
@@ -149,6 +150,10 @@ const TableManagement = () => {
               />
             </PopoverContent>
           </Popover>
+          
+          <Button variant="outline" onClick={() => setIsRestaurantMapOpen(true)}>
+            <MapPin className="mr-2 h-4 w-4" /> Restaurant Map
+          </Button>
           
           <Dialog open={isNewReservationOpen} onOpenChange={setIsNewReservationOpen}>
             <DialogTrigger asChild>
@@ -484,6 +489,12 @@ const TableManagement = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Restaurant Map Modal */}
+      <RestaurantMap 
+        isOpen={isRestaurantMapOpen} 
+        onClose={() => setIsRestaurantMapOpen(false)}
+      />
     </div>
   );
 };

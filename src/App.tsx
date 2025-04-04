@@ -10,6 +10,7 @@ import Inventory from "@/pages/Inventory";
 import Customers from "@/pages/Customers";
 import Reports from "@/pages/Reports";
 import TableManagement from "@/pages/TableManagement";
+import RestaurantMapPage from "@/pages/RestaurantMapPage";
 import POS from "@/pages/POS";
 import KitchenDisplay from "@/pages/KitchenDisplay";
 import Checkout from "@/pages/Checkout";
@@ -28,6 +29,7 @@ const App = () => {
         <Route path="/customers" element={<Customers />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/tables" element={<TableManagement />} />
+        <Route path="/restaurant-map" element={<RestaurantMapPage />} />
         <Route path="/pos" element={<POS />} />
         <Route path="/kitchen" element={<KitchenDisplay />} />
         <Route path="/checkout" element={<Checkout />} />
