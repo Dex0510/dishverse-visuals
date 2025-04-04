@@ -1,54 +1,85 @@
-
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import React, { useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useNavigate,
+} from "react-router-dom";
 import { Toaster } from "sonner";
-import { Toaster as UIToaster } from "@/components/ui/toaster";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { CartProvider } from "@/contexts/CartContext";
-import Index from "@/pages/Index";
-import SignIn from "@/pages/SignIn";
-import NotFound from "@/pages/NotFound";
-import Dashboard from "@/pages/Dashboard";
-import Inventory from "@/pages/Inventory";
-import Customers from "@/pages/Customers";
-import Reports from "@/pages/Reports";
-import TableManagement from "@/pages/TableManagement";
-import RestaurantMapPage from "@/pages/RestaurantMapPage";
-import POS from "@/pages/POS";
-import KitchenDisplay from "@/pages/KitchenDisplay";
-import Checkout from "@/pages/Checkout";
-import OrderConfirmation from "@/pages/OrderConfirmation";
-import DishManagement from "@/pages/DishManagement";
-import VoiceAssistant from "@/pages/VoiceAssistant";
-import "@/App.css";
 
-const App = () => {
+import { useAuth } from "./contexts/AuthContext";
+import Index from "./pages/Index";
+import SignIn from "./pages/SignIn";
+import Dashboard from "./pages/Dashboard";
+import POS from "./pages/POS";
+import Inventory from "./pages/Inventory";
+import Customers from "./pages/Customers";
+import DishManagement from "./pages/DishManagement";
+import TableManagement from "./pages/TableManagement";
+import KitchenDisplay from "./pages/KitchenDisplay";
+import Reports from "./pages/Reports";
+import VoiceAssistant from "./pages/VoiceAssistant";
+import Checkout from "./pages/Checkout";
+import OrderConfirmation from "./pages/OrderConfirmation";
+import NotFound from "./pages/NotFound";
+import RestaurantMap from "./components/FloorMap/RestaurantMap";
+import WaitlistManagement from "@/pages/WaitlistManagement";
+import RestaurantMapPage from "./pages/RestaurantMapPage";
+import DashboardSidebar from "./components/DashboardSidebar";
+
+const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
+  const { currentUser } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!currentUser) {
+      navigate("/signin");
+    }
+  }, [currentUser, navigate]);
+
+  return currentUser ? <>{children}</> : null;
+};
+
+function App() {
+  const { initializeAuth } = useAuth();
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
   return (
-    <AuthProvider>
-      <CartProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/sign-in" element={<SignIn />} />
+    <>
+      <Toaster />
+      <Router>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/signin" element={<SignIn />} />
+          
+          {/* Protected dashboard routes */}
+          <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/pos" element={<POS />} />
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/customers" element={<Customers />} />
-            <Route path="/reports" element={<Reports />} />
+            <Route path="/dish-management" element={<DishManagement />} />
             <Route path="/tables" element={<TableManagement />} />
-            <Route path="/restaurant-map" element={<RestaurantMapPage />} />
-            <Route path="/pos" element={<POS />} />
-            <Route path="/kitchen" element={<KitchenDisplay />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/order-confirmation" element={<OrderConfirmation />} />
-            <Route path="/dishes" element={<DishManagement />} />
+            <Route path="/waitlist" element={<WaitlistManagement />} />
+            <Route path="/kitchen-display" element={<KitchenDisplay />} />
+            <Route path="/reports" element={<Reports />} />
             <Route path="/voice-assistant" element={<VoiceAssistant />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Toaster position="top-right" richColors />
-          <UIToaster />
-        </Router>
-      </CartProvider>
-    </AuthProvider>
+            <Route path="/map" element={<RestaurantMapPage />} />
+          </Route>
+          
+          {/* Order flow routes */}
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/order-confirmation" element={<OrderConfirmation />} />
+          
+          {/* 404 route */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Router>
+    </>
   );
-};
+}
 
 export default App;

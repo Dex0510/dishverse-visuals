@@ -1,101 +1,111 @@
 
-import React from "react";
 import { NavLink } from "react-router-dom";
-import {
-  Home,
-  Utensils,
-  Users,
-  Package,
-  BarChart2,
-  Settings,
-  Coffee,
-  LogOut,
+import { 
+  LayoutDashboard, 
+  ShoppingCart, 
+  Users, 
+  ClipboardList, 
+  BarChart3, 
+  Utensils, 
+  Package, 
+  Map,
+  SlidersHorizontal,
   Clock,
-  Layout
+  Mic
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-const navItems = [
+export type SidebarNavItem = {
+  title: string;
+  href: string;
+  icon: React.ReactNode;
+  active?: boolean;
+};
+
+export const dashboardLinks: SidebarNavItem[] = [
   {
     title: "Dashboard",
     href: "/dashboard",
-    icon: Home
+    icon: <LayoutDashboard className="mr-2 h-4 w-4" />,
   },
   {
     title: "POS",
     href: "/pos",
-    icon: Layout
-  },
-  {
-    title: "Menu",
-    href: "/dishes",
-    icon: Coffee
-  },
-  {
-    title: "Tables",
-    href: "/tables",
-    icon: Utensils
+    icon: <ShoppingCart className="mr-2 h-4 w-4" />,
   },
   {
     title: "Kitchen Display",
-    href: "/kitchen",
-    icon: Clock
+    href: "/kitchen-display",
+    icon: <Utensils className="mr-2 h-4 w-4" />,
+  },
+  {
+    title: "Table Management",
+    href: "/tables",
+    icon: <SlidersHorizontal className="mr-2 h-4 w-4" />,
+  },
+  {
+    title: "Smart Waitlist",
+    href: "/waitlist",
+    icon: <Clock className="mr-2 h-4 w-4" />,
+  },
+  {
+    title: "Menu Management",
+    href: "/dish-management",
+    icon: <ClipboardList className="mr-2 h-4 w-4" />,
   },
   {
     title: "Inventory",
     href: "/inventory",
-    icon: Package
+    icon: <Package className="mr-2 h-4 w-4" />,
   },
   {
     title: "Customers",
     href: "/customers",
-    icon: Users
+    icon: <Users className="mr-2 h-4 w-4" />,
+  },
+  {
+    title: "Voice Assistant",
+    href: "/voice-assistant",
+    icon: <Mic className="mr-2 h-4 w-4" />,
+  },
+  {
+    title: "Floor Plan",
+    href: "/map",
+    icon: <Map className="mr-2 h-4 w-4" />,
   },
   {
     title: "Reports",
     href: "/reports",
-    icon: BarChart2
+    icon: <BarChart3 className="mr-2 h-4 w-4" />,
   },
-  {
-    title: "Settings",
-    href: "/settings",
-    icon: Settings
-  }
 ];
 
-const DashboardSidebar: React.FC = () => {
+const DashboardSidebar = ({ className }: { className?: string }) => {
   return (
-    <div className="h-full flex flex-col bg-background border-r">
-      <div className="p-4">
-        <h2 className="font-semibold text-lg">Restaurant Manager</h2>
-      </div>
-      
-      <nav className="flex-1 py-2">
-        <ul className="space-y-1 px-2">
-          {navItems.map((item) => (
-            <li key={item.href}>
+    <div className={cn("pb-12", className)}>
+      <div className="space-y-4 py-4">
+        <div className="px-4 py-2">
+          <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight">
+            Restaurant Management
+          </h2>
+          <div className="space-y-1">
+            {dashboardLinks.map((link) => (
               <NavLink
-                to={item.href}
-                className={({ isActive }) => `
-                  flex items-center gap-3 px-3 py-2 rounded-md transition-colors
-                  ${isActive 
-                    ? "bg-secondary text-secondary-foreground" 
-                    : "hover:bg-secondary/80 text-muted-foreground"
-                  }
-                `}
+                key={link.href}
+                to={link.href}
+                className={({ isActive }) =>
+                  cn(
+                    "group flex items-center rounded-md px-2 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                    isActive ? "bg-accent" : "transparent"
+                  )
+                }
               >
-                <item.icon size={18} />
-                <span>{item.title}</span>
+                {link.icon}
+                <span>{link.title}</span>
               </NavLink>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      
-      <div className="p-4 mt-auto border-t">
-        <NavLink to="/sign-in" className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors">
-          <LogOut size={18} />
-          <span>Sign Out</span>
-        </NavLink>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
