@@ -427,7 +427,7 @@ const TableManagement = () => {
                   value={filterStatus}
                   onValueChange={setFilterStatus}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="status-filter">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -444,7 +444,7 @@ const TableManagement = () => {
                   value={filterLocation}
                   onValueChange={setFilterLocation}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="location-filter">
                     <SelectValue placeholder="Location" />
                   </SelectTrigger>
                   <SelectContent>
