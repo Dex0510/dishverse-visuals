@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Search, 
@@ -11,7 +10,8 @@ import {
   Plus, 
   Minus, 
   Trash2, 
-  ShoppingCart as ShoppingCartIcon 
+  ShoppingCart as ShoppingCartIcon,
+  Mic
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import { Separator } from "@/components/ui/separator";
 import DishVisualizer from "@/components/DishVisualizer";
 import TableSelector from "@/components/TableSelector";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 // Mock data for menu items
 const menuItems = [
@@ -199,6 +200,12 @@ const POS = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            
+            <Link to="/voice-assistant">
+              <Button variant="outline" size="icon" className="flex-shrink-0" title="Voice Assistant">
+                <Mic className="h-4 w-4" />
+              </Button>
+            </Link>
             
             <div className="flex-shrink-0">
               <TableSelector 

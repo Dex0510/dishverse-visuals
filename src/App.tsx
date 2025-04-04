@@ -18,6 +18,7 @@ import KitchenDisplay from "@/pages/KitchenDisplay";
 import Checkout from "@/pages/Checkout";
 import OrderConfirmation from "@/pages/OrderConfirmation";
 import DishManagement from "@/pages/DishManagement";
+import VoiceAssistant from "@/pages/VoiceAssistant";
 import "@/App.css";
 
 const App = () => {
@@ -39,6 +40,7 @@ const App = () => {
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/order-confirmation" element={<OrderConfirmation />} />
             <Route path="/dishes" element={<DishManagement />} />
+            <Route path="/voice-assistant" element={<VoiceAssistant />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Toaster position="top-right" richColors />
