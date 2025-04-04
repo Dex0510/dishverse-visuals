@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,7 +27,7 @@ const SignIn = () => {
       
       if (success) {
         toast.success("Login successful!");
-        navigate("/");
+        navigate("/dashboard");
       } else {
         toast.error("Invalid email or password");
       }

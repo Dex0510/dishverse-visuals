@@ -2,6 +2,7 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
 import { Toaster as UIToaster } from "@/components/ui/toaster";
+import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "@/pages/Index";
 import SignIn from "@/pages/SignIn";
 import NotFound from "@/pages/NotFound";
@@ -20,26 +21,28 @@ import "@/App.css";
 
 const App = () => {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/sign-in" element={<SignIn />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/inventory" element={<Inventory />} />
-        <Route path="/customers" element={<Customers />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/tables" element={<TableManagement />} />
-        <Route path="/restaurant-map" element={<RestaurantMapPage />} />
-        <Route path="/pos" element={<POS />} />
-        <Route path="/kitchen" element={<KitchenDisplay />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/order-confirmation" element={<OrderConfirmation />} />
-        <Route path="/dishes" element={<DishManagement />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      <Toaster position="top-right" richColors />
-      <UIToaster />
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/sign-in" element={<SignIn />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/inventory" element={<Inventory />} />
+          <Route path="/customers" element={<Customers />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/tables" element={<TableManagement />} />
+          <Route path="/restaurant-map" element={<RestaurantMapPage />} />
+          <Route path="/pos" element={<POS />} />
+          <Route path="/kitchen" element={<KitchenDisplay />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/order-confirmation" element={<OrderConfirmation />} />
+          <Route path="/dishes" element={<DishManagement />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Toaster position="top-right" richColors />
+        <UIToaster />
+      </Router>
+    </AuthProvider>
   );
 };
 
