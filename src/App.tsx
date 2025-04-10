@@ -9,7 +9,7 @@ import {
 } from "react-router-dom";
 import { Toaster } from "sonner";
 
-import { useAuth } from "./contexts/AuthContext";
+import { useAuth } from "./hooks/useAuth";
 import { CartProvider } from "./contexts/CartContext";
 import Index from "./pages/Index";
 import SignIn from "./pages/SignIn";
