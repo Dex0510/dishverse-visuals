@@ -1,7 +1,14 @@
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { toast } from "sonner";
-import { login as apiLogin, logout as apiLogout, User } from "@/services/userService";
+
+// Define a simple User type
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
 
 // Define the Auth context type
 interface AuthContextType {
@@ -28,43 +35,38 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
 
+  // Simple login function that accepts any credentials
   const login = async (email: string, password: string): Promise<boolean> => {
-    try {
-      // Accept any credentials - no validation
-      const mockUser: User = {
-        id: "user-1",
-        email: email || "guest@example.com",
-        name: email ? email.split("@")[0] : "Guest User",
-        role: "admin",
-        createdAt: new Date().toISOString()
-      };
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      setUser(mockUser);
-      localStorage.setItem('currentUser', JSON.stringify(mockUser));
-      return true;
-    } catch (error) {
-      console.error("Login failed:", error);
-      return false;
-    }
+    // Create a mock user with whatever was entered
+    const mockUser: User = {
+      id: "user-1",
+      email: email || "guest@example.com",
+      name: email ? email.split("@")[0] : "Guest User",
+      role: "admin"
+    };
+    
+    // Set user state
+    setUser(mockUser);
+    return true;
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('currentUser');
-    toast.success("You have been logged out");
+    toast.success("Logged out successfully");
   };
 
-  const value = {
-    user,
-    isAuthenticated: !!user,
-    login,
-    logout,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: !!user,
+        login,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 // Custom hook to use the auth context

@@ -1,10 +1,11 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { User, Lock } from "lucide-react";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
@@ -15,59 +16,54 @@ const SignIn = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     setIsLoading(true);
     
     try {
-      // Login with whatever credentials were provided
+      // Login with any credentials
       const success = await login(email, password);
       
       if (success) {
-        toast.success("Login successful!");
+        toast.success("Welcome to DishVerse!");
         navigate("/dashboard");
-      } else {
-        toast.error("Login failed");
       }
     } catch (error) {
-      console.error("Login error:", error);
-      toast.error("An error occurred during login");
+      toast.error("Something went wrong");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md p-6 bg-background rounded-xl shadow-md border border-border">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="w-full max-w-sm p-6 bg-background rounded-lg shadow-md border border-border">
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold">Sign In to DishVerse</h1>
-          <p className="mt-2 text-muted-foreground">Enter any credentials to log in</p>
+          <h1 className="text-2xl font-bold">DishVerse</h1>
+          <p className="text-muted-foreground">Restaurant Management</p>
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium">
-              Email or Username
-            </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground">
+              <User size={18} />
+            </div>
             <Input
-              id="email"
-              type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter anything"
+              placeholder="Username (anything works)"
+              className="pl-10"
             />
           </div>
           
-          <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium">
-              Password
-            </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground">
+              <Lock size={18} />
+            </div>
             <Input
-              id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter anything"
+              placeholder="Password (anything works)"
+              className="pl-10"
             />
           </div>
           
@@ -81,8 +77,8 @@ const SignIn = () => {
         </form>
         
         <div className="mt-4 text-center">
-          <p className="text-sm text-muted-foreground">
-            For demo purposes, any username and password will work
+          <p className="text-xs text-muted-foreground">
+            Demo Mode: Any credentials will work
           </p>
         </div>
       </div>
