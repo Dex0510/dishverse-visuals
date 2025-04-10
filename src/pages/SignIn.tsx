@@ -16,21 +16,17 @@ const SignIn = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password) {
-      toast.error("Please enter both email and password");
-      return;
-    }
-    
     setIsLoading(true);
     
     try {
+      // Login with whatever credentials were provided
       const success = await login(email, password);
       
       if (success) {
         toast.success("Login successful!");
         navigate("/dashboard");
       } else {
-        toast.error("Invalid email or password");
+        toast.error("Login failed");
       }
     } catch (error) {
       console.error("Login error:", error);
@@ -45,21 +41,20 @@ const SignIn = () => {
       <div className="w-full max-w-md p-6 bg-background rounded-xl shadow-md border border-border">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold">Sign In to DishVerse</h1>
-          <p className="mt-2 text-muted-foreground">Enter your credentials</p>
+          <p className="mt-2 text-muted-foreground">Enter any credentials to log in</p>
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="email" className="text-sm font-medium">
-              Email Address
+              Email or Username
             </label>
             <Input
               id="email"
-              type="email"
+              type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              required
+              placeholder="Enter anything"
             />
           </div>
           
@@ -72,8 +67,7 @@ const SignIn = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
+              placeholder="Enter anything"
             />
           </div>
           
@@ -88,7 +82,7 @@ const SignIn = () => {
         
         <div className="mt-4 text-center">
           <p className="text-sm text-muted-foreground">
-            For demo purposes, you can use any email and password
+            For demo purposes, any username and password will work
           </p>
         </div>
       </div>

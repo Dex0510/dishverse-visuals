@@ -30,17 +30,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      // For demo purposes, we'll use a simplified login that accepts any credentials
+      // Accept any credentials - no validation
       const mockUser: User = {
         id: "user-1",
-        email,
-        name: email.split("@")[0],
+        email: email || "guest@example.com",
+        name: email ? email.split("@")[0] : "Guest User",
         role: "admin",
         createdAt: new Date().toISOString()
       };
       
       // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       setUser(mockUser);
       localStorage.setItem('currentUser', JSON.stringify(mockUser));
