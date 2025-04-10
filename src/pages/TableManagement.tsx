@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from "react";
+import { v4 as uuidv4 } from 'uuid';
+import { MoreHorizontal, Edit2, Trash2, Plus, X } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -21,18 +25,23 @@ import {
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,559 +49,503 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { toast } from "sonner";
-import {
-  Plus,
-  MoreVertical,
-  Edit,
-  Trash2,
-  Users,
-  Circle,
-  CheckCircle2,
-  XCircle,
-  Clock,
-} from "lucide-react";
-import DashboardLayout from "@/components/DashboardLayout";
-import { debugLog } from "@/utils/debugHelpers";
+} from "@/components/ui/dropdown-menu"
+import { useToast } from "@/components/ui/use-toast"
 
-// Mock data for tables
-const initialTables = [
-  {
-    id: "1",
-    number: "1",
-    capacity: 4,
-    status: "available",
-    location: "Main Floor",
-    lastUpdated: "2023-06-10T14:30:00",
-  },
-  {
-    id: "2",
-    number: "2",
-    capacity: 2,
-    status: "occupied",
-    location: "Main Floor",
-    lastUpdated: "2023-06-10T12:15:00",
-  },
-  {
-    id: "3",
-    number: "3",
-    capacity: 6,
-    status: "reserved",
-    location: "Patio",
-    lastUpdated: "2023-06-10T13:45:00",
-  },
-  {
-    id: "4",
-    number: "4",
-    capacity: 8,
-    status: "available",
-    location: "Private Room",
-    lastUpdated: "2023-06-10T11:00:00",
-  },
-  {
-    id: "5",
-    number: "5",
-    capacity: 4,
-    status: "maintenance",
-    location: "Main Floor",
-    lastUpdated: "2023-06-09T16:20:00",
-  },
-];
+// Mock data type
+interface TableData {
+  id: string;
+  name: string;
+  capacity: number;
+  status: "available" | "occupied" | "reserved" | "cleaning";
+  section: string;
+}
 
-// Table locations
-const tableLocations = ["Main Floor", "Patio", "Private Room", "Bar", "Lounge"];
+interface SectionData {
+  id: string;
+  name: string;
+  capacity: number;
+  tables: TableData[];
+}
 
-// Table statuses with colors
-const tableStatuses = [
-  { value: "available", label: "Available", color: "text-green-500" },
-  { value: "occupied", label: "Occupied", color: "text-red-500" },
-  { value: "reserved", label: "Reserved", color: "text-amber-500" },
-  { value: "maintenance", label: "Maintenance", color: "text-slate-500" },
-];
+const defaultTable: Omit<TableData, 'id'> = {
+  name: "New Table",
+  capacity: 2,
+  status: "available",
+  section: "main"
+};
+
+const defaultSection: Omit<SectionData, 'id' | 'tables'> = {
+  name: "New Section",
+  capacity: 20,
+};
 
 const TableManagement = () => {
-  const [tables, setTables] = useState(initialTables);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    number: "",
-    capacity: "4",
-    status: "available",
-    location: "Main Floor",
-  });
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [filterLocation, setFilterLocation] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [tables, setTables] = useState<TableData[]>([]);
+  const [sections, setSections] = useState<SectionData[]>([]);
+  const [selectedSection, setSelectedSection] = useState<string | null>(null);
+  const [isTableDrawerOpen, setIsTableDrawerOpen] = useState(false);
+  const [isSectionDrawerOpen, setIsSectionDrawerOpen] = useState(false);
+  const [editingTable, setEditingTable] = useState<TableData | null>(null);
+  const [editingSection, setEditingSection] = useState<SectionData | null>(null);
+  const [newTable, setNewTable] = useState<Omit<TableData, 'id'>>(defaultTable);
+  const [newSection, setNewSection] = useState<Omit<SectionData, 'id' | 'tables'>>(defaultSection);
+  const { toast } = useToast();
 
-  // Reset form when dialog closes
   useEffect(() => {
-    if (!isAddDialogOpen && !isEditDialogOpen) {
-      setFormData({
-        number: "",
-        capacity: "4",
-        status: "available",
-        location: "Main Floor",
+    // Mock API call to fetch tables
+    const fetchTables = async () => {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const mockTables = [
+        { id: "1", name: "Table 1", capacity: 4, status: "available", section: "main" },
+        { id: "2", name: "Table 2", capacity: 2, status: "occupied", section: "main" },
+        { id: "3", name: "Table 3", capacity: 6, status: "available", section: "main" },
+        { id: "4", name: "Table 4", capacity: 4, status: "reserved", section: "main" },
+        { id: "5", name: "Table 5", capacity: 4, status: "available", section: "outdoor" },
+        { id: "6", name: "Table 6", capacity: 4, status: "cleaning", section: "outdoor" },
+        { id: "7", name: "Table 7", capacity: 8, status: "available", section: "private" },
+        { id: "8", name: "Table 8", capacity: 4, status: "reserved", section: "private" },
+      ];
+      setTables(mockTables);
+    };
+
+    // Mock API call to fetch sections
+    const fetchSections = async () => {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const mockSections = [
+        {
+          id: "main",
+          name: "Main Floor",
+          capacity: 40,
+          tables: tables.filter(table => table.section === "main"),
+        },
+        {
+          id: "outdoor",
+          name: "Outdoor Patio",
+          capacity: 20,
+          tables: tables.filter(table => table.section === "outdoor"),
+        },
+        {
+          id: "private",
+          name: "Private Room",
+          capacity: 12,
+          tables: tables.filter(table => table.section === "private"),
+        },
+      ];
+      setSections(mockSections);
+    };
+
+    fetchTables();
+    fetchSections();
+  }, []);
+
+  useEffect(() => {
+    if (sections.length > 0) {
+      setSelectedSection(sections[0].id);
+    }
+  }, [sections]);
+
+  // Handlers for table operations
+  const handleOpenTableDrawer = () => {
+    setNewTable(defaultTable);
+    setEditingTable(null);
+    setIsTableDrawerOpen(true);
+  };
+
+  const handleCloseTableDrawer = () => {
+    setIsTableDrawerOpen(false);
+  };
+
+  const handleCreateTable = async () => {
+    if (!selectedSection) {
+      toast({
+        title: "Error",
+        description: "Please select a section first.",
+        variant: "destructive",
       });
-      setSelectedTableId(null);
+      return;
     }
-  }, [isAddDialogOpen, isEditDialogOpen]);
 
-  // Load selected table data for editing
-  useEffect(() => {
-    if (selectedTableId && isEditDialogOpen) {
-      const tableToEdit = tables.find((table) => table.id === selectedTableId);
-      if (tableToEdit) {
-        setFormData({
-          number: tableToEdit.number,
-          capacity: tableToEdit.capacity.toString(),
-          status: tableToEdit.status,
-          location: tableToEdit.location,
-        });
-      }
+    const newTableId = uuidv4();
+    const newTableData: TableData = {
+      id: newTableId,
+      ...newTable,
+    };
+
+    // Optimistically update the tables state
+    setTables([...tables, newTableData]);
+
+    // Optimistically update the sections state
+    setSections(prevSections => {
+      return prevSections.map(section => {
+        if (section.id === selectedSection) {
+          return {
+            ...section,
+            tables: [...section.tables, newTableData],
+          };
+        }
+        return section;
+      });
+    });
+
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    toast({
+      title: "Success",
+      description: "Table created successfully.",
+    });
+
+    handleCloseTableDrawer();
+  };
+
+  const handleEditTable = (table: TableData) => {
+    setEditingTable(table);
+    setNewTable(table);
+    setIsTableDrawerOpen(true);
+  };
+
+  const handleUpdateTable = async () => {
+    if (!editingTable) {
+      toast({
+        title: "Error",
+        description: "No table is being edited.",
+        variant: "destructive",
+      });
+      return;
     }
-  }, [selectedTableId, isEditDialogOpen, tables]);
 
-  // Handle form input changes
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
+    const updatedTableData: TableData = {
+      id: editingTable.id,
+      ...newTable,
+    };
+
+    // Optimistically update the tables state
+    setTables(prevTables => {
+      return prevTables.map(table => {
+        if (table.id === editingTable.id) {
+          return updatedTableData;
+        }
+        return table;
+      });
+    });
+
+    // Optimistically update the sections state
+    setSections(prevSections => {
+      return prevSections.map(section => {
+        return {
+          ...section,
+          tables: section.tables.map(table => {
+            if (table.id === editingTable.id) {
+              return updatedTableData;
+            }
+            return table;
+          }),
+        };
+      });
+    });
+
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    toast({
+      title: "Success",
+      description: "Table updated successfully.",
+    });
+
+    handleCloseTableDrawer();
+  };
+
+  const handleDeleteTable = async (tableId: string) => {
+    // Optimistically update the tables state
+    setTables(prevTables => {
+      return prevTables.filter(table => table.id !== tableId);
+    });
+
+    // Optimistically update the sections state
+    setSections(prevSections => {
+      return prevSections.map(section => {
+        return {
+          ...section,
+          tables: section.tables.filter(table => table.id !== tableId),
+        };
+      });
+    });
+
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    toast({
+      title: "Success",
+      description: "Table deleted successfully.",
     });
   };
 
-  // Handle select changes
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+  // Handlers for section operations
+  const handleOpenSectionDrawer = () => {
+    setNewSection(defaultSection);
+    setEditingSection(null);
+    setIsSectionDrawerOpen(true);
   };
 
-  // Add new table
-  const handleAddTable = () => {
-    const newTable = {
-      id: Date.now().toString(),
-      number: formData.number,
-      capacity: parseInt(formData.capacity),
-      status: formData.status,
-      location: formData.location,
-      lastUpdated: new Date().toISOString(),
+  const handleCloseSectionDrawer = () => {
+    setIsSectionDrawerOpen(false);
+  };
+
+  const handleCreateSection = async () => {
+    const newSectionId = uuidv4();
+    const newSectionData: SectionData = {
+      id: newSectionId,
+      ...newSection,
+      tables: [],
     };
 
-    setTables([...tables, newTable]);
-    setIsAddDialogOpen(false);
-    toast.success(`Table ${formData.number} added successfully`);
+    // Optimistically update the sections state
+    setSections([...sections, newSectionData]);
+
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    toast({
+      title: "Success",
+      description: "Section created successfully.",
+    });
+
+    handleCloseSectionDrawer();
   };
 
-  // Update existing table
-  const handleUpdateTable = () => {
-    if (!selectedTableId) return;
-
-    const updatedTables = tables.map((table) =>
-      table.id === selectedTableId
-        ? {
-            ...table,
-            number: formData.number,
-            capacity: parseInt(formData.capacity),
-            status: formData.status,
-            location: formData.location,
-            lastUpdated: new Date().toISOString(),
-          }
-        : table
-    );
-
-    setTables(updatedTables);
-    setIsEditDialogOpen(false);
-    toast.success(`Table ${formData.number} updated successfully`);
+  const handleEditSection = (section: SectionData) => {
+    setEditingSection(section);
+    setNewSection(section);
+    setIsSectionDrawerOpen(true);
   };
 
-  // Delete table
-  const handleDeleteTable = () => {
-    if (!selectedTableId) return;
-
-    const tableToDelete = tables.find((table) => table.id === selectedTableId);
-    const updatedTables = tables.filter((table) => table.id !== selectedTableId);
-
-    setTables(updatedTables);
-    setIsDeleteDialogOpen(false);
-    toast.success(
-      `Table ${tableToDelete ? tableToDelete.number : ""} deleted successfully`
-    );
-  };
-
-  // Quick update table status
-  const handleQuickStatusUpdate = (tableId: string, newStatus: string) => {
-    const updatedTables = tables.map((table) =>
-      table.id === tableId
-        ? {
-            ...table,
-            status: newStatus,
-            lastUpdated: new Date().toISOString(),
-          }
-        : table
-    );
-
-    setTables(updatedTables);
-    const tableNumber = tables.find((table) => table.id === tableId)?.number;
-    toast.success(
-      `Table ${tableNumber} status updated to ${
-        tableStatuses.find((status) => status.value === newStatus)?.label
-      }`
-    );
-  };
-
-  // Filter tables based on status, location, and search query
-  const filteredTables = tables.filter((table) => {
-    const matchesStatus =
-      filterStatus === "all" || table.status === filterStatus;
-    const matchesLocation =
-      filterLocation === "all" || table.location === filterLocation;
-    const matchesSearch =
-      table.number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      table.location.toLowerCase().includes(searchQuery.toLowerCase());
-
-    return matchesStatus && matchesLocation && matchesSearch;
-  });
-
-  // Get status color and icon
-  const getStatusInfo = (status: string) => {
-    const statusInfo = tableStatuses.find((s) => s.value === status);
-    let icon;
-
-    switch (status) {
-      case "available":
-        icon = <CheckCircle2 className="h-4 w-4 text-green-500" />;
-        break;
-      case "occupied":
-        icon = <XCircle className="h-4 w-4 text-red-500" />;
-        break;
-      case "reserved":
-        icon = <Clock className="h-4 w-4 text-amber-500" />;
-        break;
-      default:
-        icon = <Circle className="h-4 w-4 text-slate-500" />;
+  const handleUpdateSection = async () => {
+    if (!editingSection) {
+      toast({
+        title: "Error",
+        description: "No section is being edited.",
+        variant: "destructive",
+      });
+      return;
     }
 
-    return {
-      color: statusInfo?.color || "text-slate-500",
-      icon,
-      label: statusInfo?.label || "Unknown",
+    const updatedSectionData: SectionData = {
+      id: editingSection.id,
+      ...newSection,
+      tables: editingSection.tables,
     };
+
+    // Optimistically update the sections state
+    setSections(prevSections => {
+      return prevSections.map(section => {
+        if (section.id === editingSection.id) {
+          return updatedSectionData;
+        }
+        return section;
+      });
+    });
+
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    toast({
+      title: "Success",
+      description: "Section updated successfully.",
+    });
+
+    handleCloseSectionDrawer();
   };
 
-  // Format date for display
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-US", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(date);
+  const handleDeleteSection = async (sectionId: string) => {
+    // Optimistically update the sections state
+    setSections(prevSections => {
+      return prevSections.filter(section => section.id !== sectionId);
+    });
+
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    toast({
+      title: "Success",
+      description: "Section deleted successfully.",
+    });
   };
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              Table Management
-            </h1>
-            <p className="text-muted-foreground">
-              Manage restaurant tables and their status
-            </p>
-          </div>
-
-          <Button onClick={() => setIsAddDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Add Table
+    <div className="container mx-auto py-10">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Table Management</h1>
+        <div className="space-x-2">
+          <Button variant="outline" onClick={handleOpenSectionDrawer}>
+            Add Section
           </Button>
+          <Button onClick={handleOpenTableDrawer}>Add Table</Button>
         </div>
+      </div>
 
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Card className="w-full sm:w-1/3">
-            <CardHeader className="pb-3">
-              <CardTitle>Table Status Overview</CardTitle>
-              <CardDescription>Current table availability</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {tableStatuses.map((status) => {
-                  const count = tables.filter(
-                    (table) => table.status === status.value
-                  ).length;
-                  return (
-                    <div
-                      key={status.value}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex items-center">
-                        <div
-                          className={`w-3 h-3 rounded-full mr-2 ${
-                            status.value === "available"
-                              ? "bg-green-500"
-                              : status.value === "occupied"
-                              ? "bg-red-500"
-                              : status.value === "reserved"
-                              ? "bg-amber-500"
-                              : "bg-slate-500"
-                          }`}
-                        />
-                        <span>{status.label}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="font-medium">{count}</span>
-                        <span className="text-muted-foreground ml-1">
-                          tables
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="w-full sm:w-2/3">
-            <CardHeader className="pb-3">
-              <CardTitle>Table Capacity</CardTitle>
-              <CardDescription>
-                Distribution of tables by seating capacity
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[2, 4, 6, 8].map((capacity) => {
-                  const tablesWithCapacity = tables.filter(
-                    (table) => table.capacity === capacity
-                  );
-                  const count = tablesWithCapacity.length;
-                  const availableCount = tablesWithCapacity.filter(
-                    (table) => table.status === "available"
-                  ).length;
-
-                  return (
-                    <div key={capacity} className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <Users className="h-4 w-4 mr-2" />
-                          <span>{capacity} Seats</span>
-                        </div>
-                        <div className="text-sm">
-                          <span className="font-medium">{availableCount}</span>
-                          <span className="text-muted-foreground">
-                            /{count} available
-                          </span>
-                        </div>
-                      </div>
-                      <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-primary rounded-full"
-                          style={{
-                            width: `${
-                              count > 0 ? (availableCount / count) * 100 : 0
-                            }%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>Tables</CardTitle>
-            <CardDescription>
-              View and manage all restaurant tables
-            </CardDescription>
-
-            <div className="flex flex-col sm:flex-row gap-4 mt-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="Search tables..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <div className="flex gap-2">
-                <Select
-                  value={filterStatus}
-                  onValueChange={setFilterStatus}
-                >
-                  <SelectTrigger id="status-filter-trigger" className="w-[180px]">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    {tableStatuses.map((status) => (
-                      <SelectItem key={status.value} value={status.value}>
-                        {status.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  value={filterLocation}
-                  onValueChange={setFilterLocation}
-                >
-                  <SelectTrigger id="location-filter-trigger" className="w-[180px]">
-                    <SelectValue placeholder="Location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Locations</SelectItem>
-                    {tableLocations.map((location) => (
-                      <SelectItem key={location} value={location}>
-                        {location}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Table #</TableHead>
-                  <TableHead>Capacity</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Last Updated</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Sections List */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Sections</h2>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Capacity</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sections.map((section) => (
+                <TableRow key={section.id}>
+                  <TableCell>{section.name}</TableCell>
+                  <TableCell>{section.capacity}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Open menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => handleEditSection(section)}>
+                          <Edit2 className="mr-2 h-4 w-4" /> Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem className="text-destructive focus:bg-destructive/50">
+                              <Trash2 className="mr-2 h-4 w-4" /> Delete
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. All data associated with this section will be
+                                permanently deleted.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                onClick={() => handleDeleteSection(section.id)}
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTables.length === 0 ? (
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Tables List */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Tables</h2>
+          {sections.map((section) => (
+            <div key={section.id}>
+              <h3 className="text-lg font-medium mb-2">{section.name} Tables</h3>
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="text-center h-24 text-muted-foreground"
-                    >
-                      No tables found matching your filters.
-                    </TableCell>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Capacity</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ) : (
-                  filteredTables.map((table) => {
-                    const statusInfo = getStatusInfo(table.status);
-                    return (
+                </TableHeader>
+                <TableBody>
+                  {tables
+                    .filter((table) => table.section === section.id)
+                    .map((table) => (
                       <TableRow key={table.id}>
-                        <TableCell className="font-medium">
-                          {table.number}
-                        </TableCell>
+                        <TableCell>{table.name}</TableCell>
                         <TableCell>{table.capacity}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center">
-                            {statusInfo.icon}
-                            <span className={`ml-2 ${statusInfo.color}`}>
-                              {statusInfo.label}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>{table.location}</TableCell>
-                        <TableCell>
-                          {formatDate(table.lastUpdated)}
-                        </TableCell>
+                        <TableCell>{table.status}</TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreVertical className="h-4 w-4" />
+                              <Button variant="ghost" className="h-8 w-8 p-0">
                                 <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedTableId(table.id);
-                                  setIsEditDialogOpen(true);
-                                }}
-                              >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit Table
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedTableId(table.id);
-                                  setIsDeleteDialogOpen(true);
-                                }}
-                                className="text-destructive focus:text-destructive"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete Table
+                              <DropdownMenuItem onClick={() => handleEditTable(table)}>
+                                <Edit2 className="mr-2 h-4 w-4" /> Edit
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuLabel>
-                                Change Status
-                              </DropdownMenuLabel>
-                              {tableStatuses.map((status) => (
-                                <DropdownMenuItem
-                                  key={status.value}
-                                  disabled={table.status === status.value}
-                                  onClick={() =>
-                                    handleQuickStatusUpdate(
-                                      table.id,
-                                      status.value
-                                    )
-                                  }
-                                >
-                                  <div
-                                    className={`w-2 h-2 rounded-full mr-2 ${
-                                      status.value === "available"
-                                        ? "bg-green-500"
-                                        : status.value === "occupied"
-                                        ? "bg-red-500"
-                                        : status.value === "reserved"
-                                        ? "bg-amber-500"
-                                        : "bg-slate-500"
-                                    }`}
-                                  />
-                                  {status.label}
-                                </DropdownMenuItem>
-                              ))}
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem className="text-destructive focus:bg-destructive/50">
+                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This action cannot be undone. All data associated with this table will be
+                                      permanently deleted.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      onClick={() => handleDeleteTable(table.id)}
+                                    >
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
                       </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Add Table Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Table</DialogTitle>
-            <DialogDescription>
-              Create a new table for your restaurant.
-            </DialogDescription>
-          </DialogHeader>
+      {/* Table Drawer */}
+      <Drawer open={isTableDrawerOpen} onOpenChange={setIsTableDrawerOpen}>
+        <DrawerTrigger asChild>
+          <Button>Open</Button>
+        </DrawerTrigger>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>{editingTable ? "Edit Table" : "Create Table"}</DrawerTitle>
+            <DrawerDescription>
+              {editingTable ? "Update table details." : "Add a new table to a section."}
+            </DrawerDescription>
+          </DrawerHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="number" className="text-right">
-                Table Number
+              <Label htmlFor="name" className="text-right">
+                Name
               </Label>
               <Input
-                id="number"
-                name="number"
-                value={formData.number}
-                onChange={handleInputChange}
+                id="name"
+                value={newTable.name}
+                onChange={(e) => setNewTable({ ...newTable, name: e.target.value })}
                 className="col-span-3"
               />
             </div>
@@ -600,198 +553,109 @@ const TableManagement = () => {
               <Label htmlFor="capacity" className="text-right">
                 Capacity
               </Label>
-              <Select
-                value={formData.capacity}
-                onValueChange={(value) =>
-                  handleSelectChange("capacity", value)
+              <Input
+                type="number"
+                id="capacity"
+                value={String(newTable.capacity)}
+                onChange={(e) =>
+                  setNewTable({ ...newTable, capacity: Number(e.target.value) })
                 }
-              >
-                <SelectTrigger id="capacity-select" className="col-span-3">
-                  <SelectValue placeholder="Select capacity" />
-                </SelectTrigger>
-                <SelectContent>
-                  {[2, 4, 6, 8, 10, 12].map((num) => (
-                    <SelectItem key={num} value={num.toString()}>
-                      {num} seats
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                className="col-span-3"
+              />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="status" className="text-right">
                 Status
               </Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => handleSelectChange("status", value)}
-              >
-                <SelectTrigger id="status-select" className="col-span-3">
-                  <SelectValue placeholder="Select status" />
+              <Select onValueChange={(value) => setNewTable({ ...newTable, status: value as TableData["status"] })}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select a status" defaultValue={newTable.status} />
                 </SelectTrigger>
                 <SelectContent>
-                  {tableStatuses.map((status) => (
-                    <SelectItem key={status.value} value={status.value}>
-                      {status.label}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="available">Available</SelectItem>
+                  <SelectItem value="occupied">Occupied</SelectItem>
+                  <SelectItem value="reserved">Reserved</SelectItem>
+                  <SelectItem value="cleaning">Cleaning</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="location" className="text-right">
-                Location
+              <Label htmlFor="section" className="text-right">
+                Section
               </Label>
-              <Select
-                value={formData.location}
-                onValueChange={(value) => handleSelectChange("location", value)}
-              >
-                <SelectTrigger id="location-select" className="col-span-3">
-                  <SelectValue placeholder="Select location" />
+              <Select onValueChange={(value) => setNewTable({ ...newTable, section: value })}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select a section" defaultValue={newTable.section} />
                 </SelectTrigger>
                 <SelectContent>
-                  {tableLocations.map((location) => (
-                    <SelectItem key={location} value={location}>
-                      {location}
-                    </SelectItem>
+                  {sections.map((section) => (
+                    <SelectItem key={section.id} value={section.id}>{section.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+          <DrawerFooter>
+            <Button variant="outline" onClick={handleCloseTableDrawer}>
               Cancel
             </Button>
-            <Button onClick={handleAddTable}>Add Table</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <Button onClick={editingTable ? handleUpdateTable : handleCreateTable}>
+              {editingTable ? "Update Table" : "Create Table"}
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
 
-      {/* Edit Table Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Table</DialogTitle>
-            <DialogDescription>
-              Update the details for this table.
-            </DialogDescription>
-          </DialogHeader>
+      {/* Section Drawer */}
+      <Drawer open={isSectionDrawerOpen} onOpenChange={setIsSectionDrawerOpen}>
+        <DrawerTrigger asChild>
+          <Button>Open</Button>
+        </DrawerTrigger>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>{editingSection ? "Edit Section" : "Create Section"}</DrawerTitle>
+            <DrawerDescription>
+              {editingSection ? "Update section details." : "Add a new section."}
+            </DrawerDescription>
+          </DrawerHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-number" className="text-right">
-                Table Number
+              <Label htmlFor="name" className="text-right">
+                Name
               </Label>
               <Input
-                id="edit-number"
-                name="number"
-                value={formData.number}
-                onChange={handleInputChange}
+                id="name"
+                value={newSection.name}
+                onChange={(e) => setNewSection({ ...newSection, name: e.target.value })}
                 className="col-span-3"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-capacity" className="text-right">
+              <Label htmlFor="capacity" className="text-right">
                 Capacity
               </Label>
-              <Select
-                value={formData.capacity}
-                onValueChange={(value) =>
-                  handleSelectChange("capacity", value)
+              <Input
+                type="number"
+                id="capacity"
+                value={String(newSection.capacity)}
+                onChange={(e) =>
+                  setNewSection({ ...newSection, capacity: Number(e.target.value) })
                 }
-              >
-                <SelectTrigger id="edit-capacity-select" className="col-span-3">
-                  <SelectValue placeholder="Select capacity" />
-                </SelectTrigger>
-                <SelectContent>
-                  {[2, 4, 6, 8, 10, 12].map((num) => (
-                    <SelectItem key={num} value={num.toString()}>
-                      {num} seats
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-status" className="text-right">
-                Status
-              </Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => handleSelectChange("status", value)}
-              >
-                <SelectTrigger id="edit-status-select" className="col-span-3">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tableStatuses.map((status) => (
-                    <SelectItem key={status.value} value={status.value}>
-                      {status.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-location" className="text-right">
-                Location
-              </Label>
-              <Select
-                value={formData.location}
-                onValueChange={(value) => handleSelectChange("location", value)}
-              >
-                <SelectTrigger id="edit-location-select" className="col-span-3">
-                  <SelectValue placeholder="Select location" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tableLocations.map((location) => (
-                    <SelectItem key={location} value={location}>
-                      {location}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                className="col-span-3"
+              />
             </div>
           </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsEditDialogOpen(false)}
-            >
+          <DrawerFooter>
+            <Button variant="outline" onClick={handleCloseSectionDrawer}>
               Cancel
             </Button>
-            <Button onClick={handleUpdateTable}>Update Table</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Deletion</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this table? This action cannot be
-              undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteDialogOpen(false)}
-            >
-              Cancel
+            <Button onClick={editingSection ? handleUpdateSection : handleCreateSection}>
+              {editingSection ? "Update Section" : "Create Section"}
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteTable}
-            >
-              Delete Table
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </DashboardLayout>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    </div>
   );
 };
 

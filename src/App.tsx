@@ -10,6 +10,7 @@ import {
 import { Toaster } from "sonner";
 
 import { useAuth } from "./contexts/AuthContext";
+import { CartProvider } from "./contexts/CartContext";
 import Index from "./pages/Index";
 import SignIn from "./pages/SignIn";
 import Dashboard from "./pages/Dashboard";
@@ -49,35 +50,37 @@ function App() {
   return (
     <>
       <Toaster />
-      <Router>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/signin" element={<SignIn />} />
-          
-          {/* Protected dashboard routes */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/pos" element={<POS />} />
-            <Route path="/inventory" element={<Inventory />} />
-            <Route path="/customers" element={<Customers />} />
-            <Route path="/dish-management" element={<DishManagement />} />
-            <Route path="/tables" element={<TableManagement />} />
-            <Route path="/waitlist" element={<WaitlistManagement />} />
-            <Route path="/kitchen-display" element={<KitchenDisplay />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/voice-assistant" element={<VoiceAssistant />} />
-            <Route path="/map" element={<RestaurantMapPage />} />
-            <Route path="/rewards" element={<Rewards />} />
-          </Route>
-          
-          {/* Order flow routes */}
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/order-confirmation" element={<OrderConfirmation />} />
-          
-          {/* 404 route */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Router>
+      <CartProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/signin" element={<SignIn />} />
+            
+            {/* Protected dashboard routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/pos" element={<POS />} />
+              <Route path="/inventory" element={<Inventory />} />
+              <Route path="/customers" element={<Customers />} />
+              <Route path="/dish-management" element={<DishManagement />} />
+              <Route path="/tables" element={<TableManagement />} />
+              <Route path="/waitlist" element={<WaitlistManagement />} />
+              <Route path="/kitchen-display" element={<KitchenDisplay />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/voice-assistant" element={<VoiceAssistant />} />
+              <Route path="/map" element={<RestaurantMapPage />} />
+              <Route path="/rewards" element={<Rewards />} />
+            </Route>
+            
+            {/* Order flow routes */}
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/order-confirmation" element={<OrderConfirmation />} />
+            
+            {/* 404 route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Router>
+      </CartProvider>
     </>
   );
 }

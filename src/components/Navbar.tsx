@@ -5,6 +5,7 @@ import { Menu, X, ChefHat, ShoppingCart, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import CartButton from "@/components/CartButton";
+import CartDrawer from "@/components/CartDrawer";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -107,6 +108,12 @@ const Navbar = () => {
           </div>
         </div>
       )}
+
+      {/* Cart Drawer */}
+      <CartDrawer 
+        isOpen={showCartDrawer} 
+        onClose={() => setShowCartDrawer(false)} 
+      />
     </header>
   );
 };
