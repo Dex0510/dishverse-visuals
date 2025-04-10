@@ -12,9 +12,12 @@ import {
   SlidersHorizontal,
   Clock,
   Mic,
-  Award
+  Award,
+  LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "./ui/button";
 
 export type SidebarNavItem = {
   title: string;
@@ -87,13 +90,18 @@ export const dashboardLinks: SidebarNavItem[] = [
 ];
 
 const DashboardSidebar = ({ className }: { className?: string }) => {
+  const { logout } = useAuth();
+
   return (
-    <div className={cn("pb-12", className)}>
-      <div className="space-y-4 py-4">
-        <div className="px-4 py-2">
-          <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight">
-            Restaurant Management
-          </h2>
+    <div className={cn("pb-12 h-full flex flex-col bg-sidebar border-r border-border", className)}>
+      <div className="px-4 py-4 border-b">
+        <h2 className="font-semibold tracking-tight text-xl">
+          DishVerse
+        </h2>
+      </div>
+      
+      <div className="flex-1 overflow-auto py-4">
+        <div className="px-4">
           <div className="space-y-1">
             {dashboardLinks.map((link) => (
               <NavLink
@@ -101,16 +109,23 @@ const DashboardSidebar = ({ className }: { className?: string }) => {
                 to={link.href}
                 className={({ isActive }) =>
                   cn(
-                    "group flex items-center rounded-md px-2 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                    isActive ? "bg-accent" : "transparent"
+                    "group flex items-center rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors",
+                    isActive ? "bg-accent text-accent-foreground" : "text-foreground/80"
                   )
                 }
+                end
               >
                 {link.icon}
                 <span>{link.title}</span>
               </NavLink>
             ))}
           </div>
+        </div>
+      </div>
+      
+      <div className="mt-auto border-t p-4">
+        <div className="px-3 py-2 text-xs text-muted-foreground">
+          Demo Version 1.0
         </div>
       </div>
     </div>

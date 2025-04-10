@@ -1,15 +1,17 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   useNavigate,
-  Outlet
+  Outlet,
+  Navigate
 } from "react-router-dom";
 import { Toaster } from "sonner";
 
 import { useAuth } from "./hooks/useAuth";
+import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
 import Index from "./pages/Index";
 import SignIn from "./pages/SignIn";
@@ -28,25 +30,22 @@ import NotFound from "./pages/NotFound";
 import RestaurantMap from "./components/FloorMap/RestaurantMap";
 import WaitlistManagement from "@/pages/WaitlistManagement";
 import RestaurantMapPage from "./pages/RestaurantMapPage";
-import DashboardSidebar from "./components/DashboardSidebar";
+import DashboardLayout from "./components/DashboardLayout";
 import Rewards from "./pages/Rewards";
 
+// Improved ProtectedRoute that redirects to signin if not authenticated
 const ProtectedRoute = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!user) {
-      navigate("/signin");
-    }
-  }, [user, navigate]);
-
-  return user ? <Outlet /> : null;
+  const { isAuthenticated } = useAuth();
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/signin" replace />;
+  }
+  
+  return <Outlet />;
 };
 
-function App() {
-  const { user } = useAuth();
-
+// App component separated from authentication logic
+const AppContent = () => {
   return (
     <>
       <Toaster />
@@ -56,20 +55,22 @@ function App() {
             <Route path="/" element={<Index />} />
             <Route path="/signin" element={<SignIn />} />
             
-            {/* Protected dashboard routes */}
+            {/* Protected dashboard routes wrapped in DashboardLayout */}
             <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/pos" element={<POS />} />
-              <Route path="/inventory" element={<Inventory />} />
-              <Route path="/customers" element={<Customers />} />
-              <Route path="/dish-management" element={<DishManagement />} />
-              <Route path="/tables" element={<TableManagement />} />
-              <Route path="/waitlist" element={<WaitlistManagement />} />
-              <Route path="/kitchen-display" element={<KitchenDisplay />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/voice-assistant" element={<VoiceAssistant />} />
-              <Route path="/map" element={<RestaurantMapPage />} />
-              <Route path="/rewards" element={<Rewards />} />
+              <Route element={<DashboardLayout />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/pos" element={<POS />} />
+                <Route path="/inventory" element={<Inventory />} />
+                <Route path="/customers" element={<Customers />} />
+                <Route path="/dish-management" element={<DishManagement />} />
+                <Route path="/tables" element={<TableManagement />} />
+                <Route path="/waitlist" element={<WaitlistManagement />} />
+                <Route path="/kitchen-display" element={<KitchenDisplay />} />
+                <Route path="/reports" element={<Reports />} />
+                <Route path="/voice-assistant" element={<VoiceAssistant />} />
+                <Route path="/map" element={<RestaurantMapPage />} />
+                <Route path="/rewards" element={<Rewards />} />
+              </Route>
             </Route>
             
             {/* Order flow routes */}
@@ -82,6 +83,15 @@ function App() {
         </Router>
       </CartProvider>
     </>
+  );
+};
+
+// Main App component with AuthProvider wrapper
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

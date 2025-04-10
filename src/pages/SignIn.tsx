@@ -25,6 +25,8 @@ const SignIn = () => {
       if (success) {
         toast.success("Welcome to DishVerse!");
         navigate("/dashboard");
+      } else {
+        toast.error("Login failed");
       }
     } catch (error) {
       toast.error("Something went wrong");
