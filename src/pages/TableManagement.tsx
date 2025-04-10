@@ -97,7 +97,7 @@ const TableManagement = () => {
     const fetchTables = async () => {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 500));
-      const mockTables = [
+      const mockTables: TableData[] = [
         { id: "1", name: "Table 1", capacity: 4, status: "available", section: "main" },
         { id: "2", name: "Table 2", capacity: 2, status: "occupied", section: "main" },
         { id: "3", name: "Table 3", capacity: 6, status: "available", section: "main" },
