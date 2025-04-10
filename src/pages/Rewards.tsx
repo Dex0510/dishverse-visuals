@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Award, Trophy, Gift, Share2, History, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { loyaltyService } from "@/services/loyaltyService";
 import { Badge, Challenge, Reward, CustomerLoyalty } from "@/types/loyalty";
 import BadgeCard from "@/components/loyalty/BadgeCard";
