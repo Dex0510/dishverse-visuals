@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { toast } from "sonner";
+import { login as apiLogin, logout as apiLogout, User } from "@/services/userService";
 
 // Define the Auth context type
 interface AuthContextType {
@@ -8,14 +9,6 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-}
-
-// Define the User type
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: "admin" | "manager" | "staff";
 }
 
 // Create a context with a default value
@@ -35,21 +28,22 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
 
-  // In a real app, this would call an API
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      // For demo purposes, we'll accept any login credentials
-      const mockUser = {
+      // For demo purposes, we'll use a simplified login that accepts any credentials
+      const mockUser: User = {
         id: "user-1",
         email,
         name: email.split("@")[0],
-        role: "admin" as const,
+        role: "admin",
+        createdAt: new Date().toISOString()
       };
       
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 500));
       
       setUser(mockUser);
+      localStorage.setItem('currentUser', JSON.stringify(mockUser));
       return true;
     } catch (error) {
       console.error("Login failed:", error);
@@ -59,6 +53,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('currentUser');
     toast.success("You have been logged out");
   };
 
@@ -82,4 +77,3 @@ export const useAuth = () => {
   
   return context;
 };
-
