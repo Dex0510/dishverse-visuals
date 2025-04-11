@@ -1,20 +1,17 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import { useFloorPlan } from '@/contexts/FloorPlanContext';
-import { TablePosition } from '@/services/floorPlanService';
-import { Table } from '@/services/tableService';
+import { Zone } from '@/models/furniture';
 import { cn } from '@/lib/utils';
 
-interface FloorTableProps {
-  position: TablePosition;
-  table: Table;
+interface FloorZoneProps {
+  zone: Zone;
   isSelected: boolean;
   isPreviewMode?: boolean;
 }
 
-const FloorTable: React.FC<FloorTableProps> = ({ 
-  position, 
-  table, 
+const FloorZone: React.FC<FloorZoneProps> = ({ 
+  zone, 
   isSelected,
   isPreviewMode = false
 }) => {
@@ -22,7 +19,7 @@ const FloorTable: React.FC<FloorTableProps> = ({
     setSelectedItemId,
     setSelectedItemType,
     editMode,
-    updateTablePosition,
+    updateZone,
     isDragging,
     setIsDragging,
     isResizing,
@@ -31,7 +28,7 @@ const FloorTable: React.FC<FloorTableProps> = ({
     gridSize
   } = useFloorPlan();
   
-  const tableRef = useRef<HTMLDivElement>(null);
+  const zoneRef = useRef<HTMLDivElement>(null);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [resizeStart, setResizeStart] = useState({ width: 0, height: 0, x: 0, y: 0 });
 
@@ -39,8 +36,8 @@ const FloorTable: React.FC<FloorTableProps> = ({
     if (isPreviewMode) return;
     
     e.stopPropagation();
-    setSelectedItemId(position.id);
-    setSelectedItemType('table');
+    setSelectedItemId(zone.id);
+    setSelectedItemType('zone');
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -49,8 +46,8 @@ const FloorTable: React.FC<FloorTableProps> = ({
     
     e.stopPropagation();
     setDragStart({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y
+      x: e.clientX - zone.x,
+      y: e.clientY - zone.y
     });
     setIsDragging(true);
   };
@@ -61,8 +58,8 @@ const FloorTable: React.FC<FloorTableProps> = ({
     
     e.stopPropagation();
     setResizeStart({
-      width: position.width,
-      height: position.height,
+      width: zone.width,
+      height: zone.height,
       x: e.clientX,
       y: e.clientY
     });
@@ -81,8 +78,8 @@ const FloorTable: React.FC<FloorTableProps> = ({
           newY = Math.round(newY / gridSize) * gridSize;
         }
         
-        updateTablePosition({
-          ...position,
+        updateZone({
+          ...zone,
           x: newX,
           y: newY
         });
@@ -90,8 +87,8 @@ const FloorTable: React.FC<FloorTableProps> = ({
         const deltaX = e.clientX - resizeStart.x;
         const deltaY = e.clientY - resizeStart.y;
         
-        let newWidth = Math.max(50, resizeStart.width + deltaX);
-        let newHeight = Math.max(50, resizeStart.height + deltaY);
+        let newWidth = Math.max(100, resizeStart.width + deltaX);
+        let newHeight = Math.max(100, resizeStart.height + deltaY);
         
         // Snap to grid if enabled
         if (snapToGrid) {
@@ -99,8 +96,8 @@ const FloorTable: React.FC<FloorTableProps> = ({
           newHeight = Math.round(newHeight / gridSize) * gridSize;
         }
         
-        updateTablePosition({
-          ...position,
+        updateZone({
+          ...zone,
           width: newWidth,
           height: newHeight
         });
@@ -131,55 +128,41 @@ const FloorTable: React.FC<FloorTableProps> = ({
     dragStart, 
     resizeStart, 
     editMode, 
-    position, 
-    updateTablePosition, 
+    zone, 
+    updateZone, 
     setIsDragging, 
     setIsResizing,
     snapToGrid,
     gridSize
   ]);
 
-  const getStatusColor = () => {
-    switch (table.status) {
-      case 'available':
-        return 'bg-green-100 border-green-500 text-green-700';
-      case 'occupied':
-        return 'bg-red-100 border-red-500 text-red-700';
-      case 'reserved':
-        return 'bg-yellow-100 border-yellow-500 text-yellow-700';
-      case 'cleaning':
-        return 'bg-blue-100 border-blue-500 text-blue-700';
-      default:
-        return 'bg-gray-100 border-gray-300 text-gray-700';
-    }
-  };
-
   const style: React.CSSProperties = {
-    left: `${position.x}px`,
-    top: `${position.y}px`,
-    width: `${position.width}px`,
-    height: `${position.height}px`,
-    transform: `rotate(${position.rotation}deg)`,
-    borderRadius: position.shape === 'circle' ? '50%' : '4px',
+    left: `${zone.x}px`,
+    top: `${zone.y}px`,
+    width: `${zone.width}px`,
+    height: `${zone.height}px`,
+    backgroundColor: zone.color,
+    opacity: zone.opacity,
     cursor: editMode === 'select' && !isPreviewMode ? 'move' : 'default',
-    zIndex: 10 // Keep tables above zones
+    pointerEvents: isPreviewMode ? 'none' : 'auto',
+    zIndex: 0, // Keep zones below furniture and tables
   };
 
   return (
     <div
-      ref={tableRef}
+      ref={zoneRef}
       className={cn(
-        'absolute flex flex-col items-center justify-center border-2 shadow-sm transition-shadow',
-        getStatusColor(),
-        isSelected && !isPreviewMode && 'ring-2 ring-blue-500 ring-offset-2',
-        editMode === 'delete' && isSelected && !isPreviewMode && 'ring-2 ring-red-500 ring-offset-2'
+        'absolute rounded-md border-2',
+        isSelected && !isPreviewMode && 'ring-2 ring-blue-500 ring-offset-2 ring-offset-transparent',
+        editMode === 'delete' && isSelected && !isPreviewMode && 'ring-2 ring-red-500 ring-offset-2 ring-offset-transparent'
       )}
       style={style}
       onClick={handleClick}
       onMouseDown={handleMouseDown}
     >
-      <span className="font-medium text-sm">{table.name}</span>
-      <span className="text-xs">{table.capacity} seats</span>
+      <div className="absolute top-2 left-2 bg-white px-2 py-1 rounded text-xs font-medium">
+        {zone.name}
+      </div>
       
       {isSelected && editMode === 'resize' && !isPreviewMode && (
         <div 
@@ -191,4 +174,4 @@ const FloorTable: React.FC<FloorTableProps> = ({
   );
 };
 
-export default FloorTable;
+export default FloorZone;

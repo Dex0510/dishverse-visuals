@@ -48,6 +48,11 @@ export const dashboardLinks: SidebarNavItem[] = [
     icon: <SlidersHorizontal className="mr-2 h-4 w-4" />,
   },
   {
+    title: "Floor Plan Designer",
+    href: "/map",
+    icon: <Map className="mr-2 h-4 w-4" />,
+  },
+  {
     title: "Smart Waitlist",
     href: "/waitlist",
     icon: <Clock className="mr-2 h-4 w-4" />,
@@ -76,11 +81,6 @@ export const dashboardLinks: SidebarNavItem[] = [
     title: "Voice Assistant",
     href: "/voice-assistant",
     icon: <Mic className="mr-2 h-4 w-4" />,
-  },
-  {
-    title: "Floor Plan",
-    href: "/map",
-    icon: <Map className="mr-2 h-4 w-4" />,
   },
   {
     title: "Reports",
@@ -124,6 +124,14 @@ const DashboardSidebar = ({ className }: { className?: string }) => {
       </div>
       
       <div className="mt-auto border-t p-4">
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start text-muted-foreground hover:text-foreground"
+          onClick={logout}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Logout</span>
+        </Button>
         <div className="px-3 py-2 text-xs text-muted-foreground">
           Demo Version 1.0
         </div>

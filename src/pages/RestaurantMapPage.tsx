@@ -16,7 +16,10 @@ const RestaurantMapPage = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate('/tables')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-2xl font-bold ml-2">Restaurant Floor Plan Editor</h1>
+          <h1 className="text-2xl font-bold ml-2">Interactive Floor Plan Designer</h1>
+        </div>
+        <div className="text-sm text-muted-foreground">
+          Design, customize and simulate your restaurant layout
         </div>
       </div>
 

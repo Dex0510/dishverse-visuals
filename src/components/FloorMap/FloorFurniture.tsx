@@ -1,20 +1,29 @@
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useFloorPlan } from '@/contexts/FloorPlanContext';
-import { TablePosition } from '@/services/floorPlanService';
-import { Table } from '@/services/tableService';
+import { FurnitureItem } from '@/models/furniture';
 import { cn } from '@/lib/utils';
+import * as LucideIcons from 'lucide-react';
 
-interface FloorTableProps {
-  position: TablePosition;
-  table: Table;
+interface FloorFurnitureProps {
+  position: {
+    id: string;
+    furnitureId: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    rotation: number;
+    floorId: string;
+  };
+  furniture: FurnitureItem;
   isSelected: boolean;
   isPreviewMode?: boolean;
 }
 
-const FloorTable: React.FC<FloorTableProps> = ({ 
+const FloorFurniture: React.FC<FloorFurnitureProps> = ({ 
   position, 
-  table, 
+  furniture, 
   isSelected,
   isPreviewMode = false
 }) => {
@@ -22,7 +31,7 @@ const FloorTable: React.FC<FloorTableProps> = ({
     setSelectedItemId,
     setSelectedItemType,
     editMode,
-    updateTablePosition,
+    updateFurniturePosition,
     isDragging,
     setIsDragging,
     isResizing,
@@ -31,7 +40,7 @@ const FloorTable: React.FC<FloorTableProps> = ({
     gridSize
   } = useFloorPlan();
   
-  const tableRef = useRef<HTMLDivElement>(null);
+  const furnitureRef = useRef<HTMLDivElement>(null);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [resizeStart, setResizeStart] = useState({ width: 0, height: 0, x: 0, y: 0 });
 
@@ -40,7 +49,7 @@ const FloorTable: React.FC<FloorTableProps> = ({
     
     e.stopPropagation();
     setSelectedItemId(position.id);
-    setSelectedItemType('table');
+    setSelectedItemType('furniture');
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -81,17 +90,26 @@ const FloorTable: React.FC<FloorTableProps> = ({
           newY = Math.round(newY / gridSize) * gridSize;
         }
         
-        updateTablePosition({
+        updateFurniturePosition({
           ...position,
           x: newX,
           y: newY
         });
-      } else if (isResizing && editMode === 'resize') {
+      } else if (isResizing && editMode === 'resize' && furniture.isResizable) {
         const deltaX = e.clientX - resizeStart.x;
         const deltaY = e.clientY - resizeStart.y;
         
-        let newWidth = Math.max(50, resizeStart.width + deltaX);
-        let newHeight = Math.max(50, resizeStart.height + deltaY);
+        let newWidth = Math.max(furniture.minWidth || 30, resizeStart.width + deltaX);
+        let newHeight = Math.max(furniture.minHeight || 30, resizeStart.height + deltaY);
+        
+        // Respect max dimensions if specified
+        if (furniture.maxWidth) {
+          newWidth = Math.min(newWidth, furniture.maxWidth);
+        }
+        
+        if (furniture.maxHeight) {
+          newHeight = Math.min(newHeight, furniture.maxHeight);
+        }
         
         // Snap to grid if enabled
         if (snapToGrid) {
@@ -99,7 +117,7 @@ const FloorTable: React.FC<FloorTableProps> = ({
           newHeight = Math.round(newHeight / gridSize) * gridSize;
         }
         
-        updateTablePosition({
+        updateFurniturePosition({
           ...position,
           width: newWidth,
           height: newHeight
@@ -132,23 +150,47 @@ const FloorTable: React.FC<FloorTableProps> = ({
     resizeStart, 
     editMode, 
     position, 
-    updateTablePosition, 
+    updateFurniturePosition, 
     setIsDragging, 
     setIsResizing,
+    furniture,
     snapToGrid,
     gridSize
   ]);
 
-  const getStatusColor = () => {
-    switch (table.status) {
-      case 'available':
-        return 'bg-green-100 border-green-500 text-green-700';
-      case 'occupied':
-        return 'bg-red-100 border-red-500 text-red-700';
-      case 'reserved':
-        return 'bg-yellow-100 border-yellow-500 text-yellow-700';
-      case 'cleaning':
+  // Get the appropriate icon component from lucide-react
+  const getIconComponent = (iconName: string) => {
+    // Remove "Icon" suffix if present
+    const cleanIconName = iconName.endsWith('Icon') 
+      ? iconName.substring(0, iconName.length - 4) 
+      : iconName;
+      
+    // @ts-ignore - dynamic import from lucide-react
+    const Icon = LucideIcons[cleanIconName];
+    
+    if (!Icon) {
+      console.warn(`Icon ${cleanIconName} not found`);
+      return LucideIcons.HelpCircle;
+    }
+    
+    return Icon;
+  };
+  
+  const IconComponent = getIconComponent(furniture.icon);
+
+  // Determine furniture styling based on category
+  const getFurnitureStyle = () => {
+    switch (furniture.category) {
+      case 'seating':
         return 'bg-blue-100 border-blue-500 text-blue-700';
+      case 'structural':
+        return 'bg-gray-100 border-gray-500 text-gray-700';
+      case 'decor':
+        return 'bg-green-100 border-green-500 text-green-700';
+      case 'service':
+        return 'bg-purple-100 border-purple-500 text-purple-700';
+      case 'equipment':
+        return 'bg-yellow-100 border-yellow-500 text-yellow-700';
       default:
         return 'bg-gray-100 border-gray-300 text-gray-700';
     }
@@ -160,17 +202,17 @@ const FloorTable: React.FC<FloorTableProps> = ({
     width: `${position.width}px`,
     height: `${position.height}px`,
     transform: `rotate(${position.rotation}deg)`,
-    borderRadius: position.shape === 'circle' ? '50%' : '4px',
     cursor: editMode === 'select' && !isPreviewMode ? 'move' : 'default',
-    zIndex: 10 // Keep tables above zones
   };
+  
+  const { name, capacity } = furniture;
 
   return (
     <div
-      ref={tableRef}
+      ref={furnitureRef}
       className={cn(
         'absolute flex flex-col items-center justify-center border-2 shadow-sm transition-shadow',
-        getStatusColor(),
+        getFurnitureStyle(),
         isSelected && !isPreviewMode && 'ring-2 ring-blue-500 ring-offset-2',
         editMode === 'delete' && isSelected && !isPreviewMode && 'ring-2 ring-red-500 ring-offset-2'
       )}
@@ -178,10 +220,16 @@ const FloorTable: React.FC<FloorTableProps> = ({
       onClick={handleClick}
       onMouseDown={handleMouseDown}
     >
-      <span className="font-medium text-sm">{table.name}</span>
-      <span className="text-xs">{table.capacity} seats</span>
+      <IconComponent className="h-6 w-6" />
       
-      {isSelected && editMode === 'resize' && !isPreviewMode && (
+      {(position.width > 60 && position.height > 50) && (
+        <>
+          <span className="font-medium text-xs mt-1">{name}</span>
+          {capacity && <span className="text-xs">{capacity} seats</span>}
+        </>
+      )}
+      
+      {isSelected && editMode === 'resize' && furniture.isResizable && !isPreviewMode && (
         <div 
           className="absolute bottom-0 right-0 w-4 h-4 bg-blue-500 rounded-full cursor-se-resize"
           onMouseDown={handleResizeStart}
@@ -191,4 +239,4 @@ const FloorTable: React.FC<FloorTableProps> = ({
   );
 };
 
-export default FloorTable;
+export default FloorFurniture;
