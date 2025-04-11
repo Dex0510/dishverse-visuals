@@ -1,8 +1,8 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { useFloorPlan } from '@/contexts/FloorPlanContext';
 import { FurnitureItem } from '@/models/furniture';
 import { cn } from '@/lib/utils';
-import * as LucideIcons from 'lucide-react';
 
 interface FloorFurnitureProps {
   position: {
@@ -20,9 +20,9 @@ interface FloorFurnitureProps {
   isPreviewMode?: boolean;
 }
 
-const FloorFurniture: React.FC<FloorFurnitureProps> = ({ 
-  position, 
-  furniture, 
+const FloorFurniture: React.FC<FloorFurnitureProps> = ({
+  position,
+  furniture,
   isSelected,
   isPreviewMode = false
 }) => {
@@ -94,21 +94,12 @@ const FloorFurniture: React.FC<FloorFurnitureProps> = ({
           x: newX,
           y: newY
         });
-      } else if (isResizing && editMode === 'resize' && furniture.isResizable) {
+      } else if (isResizing && editMode === 'resize') {
         const deltaX = e.clientX - resizeStart.x;
         const deltaY = e.clientY - resizeStart.y;
         
-        let newWidth = Math.max(furniture.minWidth || 30, resizeStart.width + deltaX);
-        let newHeight = Math.max(furniture.minHeight || 30, resizeStart.height + deltaY);
-        
-        // Respect max dimensions if specified
-        if (furniture.maxWidth) {
-          newWidth = Math.min(newWidth, furniture.maxWidth);
-        }
-        
-        if (furniture.maxHeight) {
-          newHeight = Math.min(newHeight, furniture.maxHeight);
-        }
+        let newWidth = Math.max(20, resizeStart.width + deltaX);
+        let newHeight = Math.max(20, resizeStart.height + deltaY);
         
         // Snap to grid if enabled
         if (snapToGrid) {
@@ -152,48 +143,9 @@ const FloorFurniture: React.FC<FloorFurnitureProps> = ({
     updateFurniturePosition, 
     setIsDragging, 
     setIsResizing,
-    furniture,
     snapToGrid,
     gridSize
   ]);
-
-  // Get the appropriate icon component from lucide-react
-  const getIconComponent = (iconName: string) => {
-    // Remove "Icon" suffix if present
-    const cleanIconName = iconName.endsWith('Icon') 
-      ? iconName.substring(0, iconName.length - 4) 
-      : iconName;
-      
-    // @ts-ignore - dynamic import from lucide-react
-    const Icon = LucideIcons[cleanIconName];
-    
-    if (!Icon) {
-      console.warn(`Icon ${cleanIconName} not found`);
-      return LucideIcons.HelpCircle;
-    }
-    
-    return Icon;
-  };
-  
-  const IconComponent = getIconComponent(furniture.icon);
-
-  // Determine furniture styling based on category
-  const getFurnitureStyle = () => {
-    switch (furniture.category) {
-      case 'seating':
-        return 'bg-blue-100 border-blue-500 text-blue-700';
-      case 'structural':
-        return 'bg-gray-100 border-gray-500 text-gray-700';
-      case 'decor':
-        return 'bg-green-100 border-green-500 text-green-700';
-      case 'service':
-        return 'bg-purple-100 border-purple-500 text-purple-700';
-      case 'equipment':
-        return 'bg-yellow-100 border-yellow-500 text-yellow-700';
-      default:
-        return 'bg-gray-100 border-gray-300 text-gray-700';
-    }
-  };
 
   const style: React.CSSProperties = {
     left: `${position.x}px`,
@@ -202,16 +154,18 @@ const FloorFurniture: React.FC<FloorFurnitureProps> = ({
     height: `${position.height}px`,
     transform: `rotate(${position.rotation}deg)`,
     cursor: editMode === 'select' && !isPreviewMode ? 'move' : 'default',
+    backgroundImage: furniture.icon ? `url(${furniture.icon})` : undefined,
+    backgroundSize: 'contain',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+    backgroundColor: furniture.color || '#e2e8f0'
   };
-  
-  const { name, capacity } = furniture;
 
   return (
     <div
       ref={furnitureRef}
       className={cn(
-        'absolute flex flex-col items-center justify-center border-2 shadow-sm transition-shadow',
-        getFurnitureStyle(),
+        'absolute flex items-center justify-center border border-gray-300 shadow-sm transition-shadow',
         isSelected && !isPreviewMode && 'ring-2 ring-blue-500 ring-offset-2',
         editMode === 'delete' && isSelected && !isPreviewMode && 'ring-2 ring-red-500 ring-offset-2'
       )}
@@ -219,16 +173,11 @@ const FloorFurniture: React.FC<FloorFurnitureProps> = ({
       onClick={handleClick}
       onMouseDown={handleMouseDown}
     >
-      <IconComponent className="h-6 w-6" />
-      
-      {(position.width > 60 && position.height > 50) && (
-        <>
-          <span className="font-medium text-xs mt-1">{name}</span>
-          {capacity && <span className="text-xs">{capacity} seats</span>}
-        </>
+      {!furniture.icon && (
+        <span className="text-xs text-center px-1">{furniture.name}</span>
       )}
       
-      {isSelected && editMode === 'resize' && furniture.isResizable && !isPreviewMode && (
+      {isSelected && editMode === 'resize' && !isPreviewMode && (
         <div 
           className="absolute bottom-0 right-0 w-4 h-4 bg-blue-500 rounded-full cursor-se-resize"
           onMouseDown={handleResizeStart}

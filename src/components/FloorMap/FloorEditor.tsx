@@ -1,5 +1,6 @@
+
 import React, { useEffect, useState, useRef } from 'react';
-import { useFloorPlan } from '@/contexts/FloorPlanContext';
+import { useFloorPlan, EditorMode } from '@/contexts/FloorPlanContext';
 import FloorTable from './FloorTable';
 import FloorFurniture from './FloorFurniture';
 import FloorZone from './FloorZone';
@@ -27,7 +28,6 @@ import { Zone } from '@/models/furniture';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { EditorMode } from '@/contexts/FloorPlanContext';
 
 interface FloorEditorProps {
   onSave?: () => void;
@@ -167,7 +167,7 @@ const FloorEditor: React.FC<FloorEditorProps> = ({
     }
     
     const animate = () => {
-      setSimulationFrame(simulationFrame => simulationFrame + 1);
+      setSimulationFrame(prev => prev + 1);
       animationRef.current = requestAnimationFrame(animate);
     };
     
