@@ -1,15 +1,55 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import webSocketService, { WebSocketEventType } from '@/services/webSocketService';
 
 /**
- * Hook to subscribe to WebSocket events and update state
+ * Hook to subscribe to WebSocket events and update state with fallback to polling
  * @param eventType WebSocket event type to subscribe to
  * @param initialData Initial data state
- * @returns The current data state that updates in real-time via WebSocket
+ * @param fallbackFetchFn Optional fallback fetch function to use when WebSocket is not available
+ * @param pollingInterval Optional polling interval in milliseconds (default: 10000ms)
+ * @returns The current data state that updates in real-time via WebSocket or polling
  */
-export function useWebSocketData<T>(eventType: WebSocketEventType, initialData: T): T {
+export function useWebSocketData<T>(
+  eventType: WebSocketEventType, 
+  initialData: T, 
+  fallbackFetchFn?: () => Promise<T>,
+  pollingInterval = 10000
+): T {
   const [data, setData] = useState<T>(initialData);
+  const [isPolling, setIsPolling] = useState(false);
+  const pollingTimeoutRef = useRef<number | null>(null);
+  
+  // Cleanup function for polling
+  const cleanupPolling = useCallback(() => {
+    if (pollingTimeoutRef.current !== null) {
+      window.clearTimeout(pollingTimeoutRef.current);
+      pollingTimeoutRef.current = null;
+    }
+  }, []);
+  
+  // Start polling function
+  const startPolling = useCallback(() => {
+    if (!fallbackFetchFn || isPolling) return;
+    
+    setIsPolling(true);
+    console.log(`WebSocket unavailable for ${eventType}, falling back to polling`);
+    
+    const poll = async () => {
+      try {
+        const freshData = await fallbackFetchFn();
+        setData(freshData);
+      } catch (error) {
+        console.error(`Polling error for ${eventType}:`, error);
+      }
+      
+      // Schedule next poll
+      pollingTimeoutRef.current = window.setTimeout(poll, pollingInterval);
+    };
+    
+    // Start polling immediately
+    poll();
+  }, [eventType, fallbackFetchFn, isPolling, pollingInterval]);
   
   useEffect(() => {
     // Set initial data when it changes from props
@@ -18,15 +58,50 @@ export function useWebSocketData<T>(eventType: WebSocketEventType, initialData: 
     // Set up WebSocket listener
     const handleUpdate = (updatedData: T) => {
       setData(updatedData);
+      
+      // If we're polling but WebSocket is working, stop polling
+      if (isPolling) {
+        cleanupPolling();
+        setIsPolling(false);
+      }
     };
     
-    webSocketService.addEventListener(eventType, handleUpdate);
+    // Try to use WebSocket first
+    const isConnected = webSocketService.isConnected();
     
-    // Clean up listener on unmount
+    if (isConnected) {
+      webSocketService.addEventListener(eventType, handleUpdate);
+    } else if (fallbackFetchFn) {
+      // If WebSocket is not connected and we have a fallback fetch function, start polling
+      startPolling();
+    }
+    
+    // Try to connect WebSocket if it's not connected
+    if (!isConnected) {
+      webSocketService.connect()
+        .then(() => {
+          webSocketService.addEventListener(eventType, handleUpdate);
+          
+          // If connection successful and we were polling, stop polling
+          if (isPolling) {
+            cleanupPolling();
+            setIsPolling(false);
+          }
+        })
+        .catch(() => {
+          // If connection fails and we have a fallback, ensure polling is active
+          if (fallbackFetchFn && !isPolling) {
+            startPolling();
+          }
+        });
+    }
+    
+    // Clean up listener and polling on unmount
     return () => {
       webSocketService.removeEventListener(eventType, handleUpdate);
+      cleanupPolling();
     };
-  }, [eventType, initialData]);
+  }, [eventType, initialData, fallbackFetchFn, isPolling, startPolling, cleanupPolling]);
   
   return data;
 }
@@ -46,25 +121,35 @@ export function useWebSocketSend() {
  * @returns Whether the WebSocket is currently connected
  */
 export function useWebSocketStatus() {
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState(webSocketService.isConnected());
   
   useEffect(() => {
-    const checkConnection = () => {
-      // This is a simplified way to check - in a real implementation,
-      // you'd want to expose the connection status from the WebSocketService
-      webSocketService.connect()
-        .then(() => setIsConnected(true))
-        .catch(() => setIsConnected(false));
+    const handleConnection = () => {
+      setIsConnected(true);
     };
     
-    // Check initial connection
-    checkConnection();
+    const handleDisconnection = () => {
+      setIsConnected(false);
+    };
     
-    // Set up periodic connection check
-    const intervalId = setInterval(checkConnection, 5000);
+    // Set up connection event listeners
+    webSocketService.addConnectionListener('connected', handleConnection);
+    webSocketService.addConnectionListener('disconnected', handleDisconnection);
     
+    // Set initial status
+    setIsConnected(webSocketService.isConnected());
+    
+    // Try to connect if not already connected
+    if (!webSocketService.isConnected()) {
+      webSocketService.connect().catch(() => {
+        setIsConnected(false);
+      });
+    }
+    
+    // Clean up listeners on unmount
     return () => {
-      clearInterval(intervalId);
+      webSocketService.removeConnectionListener('connected', handleConnection);
+      webSocketService.removeConnectionListener('disconnected', handleDisconnection);
     };
   }, []);
   

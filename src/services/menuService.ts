@@ -1,5 +1,6 @@
 
 import apiClient from './api';
+import webSocketService from './webSocketService';
 
 export interface MenuItem {
   id: string;
@@ -28,9 +29,26 @@ export interface MenuCategory {
   displayOrder: number;
 }
 
+// Function to register menu item listeners with WebSocket service
+export const registerMenuWebSocketListeners = () => {
+  // We register this on initial import so the WebSocket service knows about these event types
+  webSocketService.registerEventType('menu_items_updated');
+  webSocketService.registerEventType('menu_item_updated');
+  webSocketService.registerEventType('menu_item_created');
+  webSocketService.registerEventType('menu_item_deleted');
+  webSocketService.registerEventType('menu_categories_updated');
+};
+
+// Register listeners immediately
+registerMenuWebSocketListeners();
+
 export const getMenuItems = async (): Promise<MenuItem[]> => {
   try {
     const response = await apiClient.get<MenuItem[]>('/menu');
+    
+    // Notify the WebSocket service about this data so it can use it for mock purposes
+    webSocketService.updateMockData('menu_items_updated', response.data);
+    
     return response.data;
   } catch (error) {
     console.error('Error fetching menu items:', error);
@@ -75,10 +93,18 @@ export const createMenuItem = async (item: Omit<MenuItem, 'id'>): Promise<MenuIt
           'Content-Type': 'multipart/form-data',
         },
       });
+      
+      // Notify via WebSocket about the new item
+      webSocketService.sendMessage('menu_item_created', response.data);
+      
       return response.data;
     } else {
       // Standard JSON request if no image upload
       const response = await apiClient.post<MenuItem>('/menu', item);
+      
+      // Notify via WebSocket about the new item
+      webSocketService.sendMessage('menu_item_created', response.data);
+      
       return response.data;
     }
   } catch (error) {
@@ -114,10 +140,18 @@ export const updateMenuItem = async (id: string, item: Partial<MenuItem>): Promi
           'Content-Type': 'multipart/form-data',
         },
       });
+      
+      // Notify via WebSocket about the updated item
+      webSocketService.sendMessage('menu_item_updated', response.data);
+      
       return response.data;
     } else {
       // Standard JSON request if no image upload
       const response = await apiClient.put<MenuItem>(`/menu/${id}`, item);
+      
+      // Notify via WebSocket about the updated item
+      webSocketService.sendMessage('menu_item_updated', response.data);
+      
       return response.data;
     }
   } catch (error) {
@@ -129,6 +163,12 @@ export const updateMenuItem = async (id: string, item: Partial<MenuItem>): Promi
 export const deleteMenuItem = async (id: string): Promise<{ success: boolean }> => {
   try {
     const response = await apiClient.delete<{ success: boolean }>(`/menu/${id}`);
+    
+    // Notify via WebSocket about the deleted item
+    if (response.data.success) {
+      webSocketService.sendMessage('menu_item_deleted', { id });
+    }
+    
     return response.data;
   } catch (error) {
     console.error(`Error deleting menu item ${id}:`, error);
@@ -139,6 +179,10 @@ export const deleteMenuItem = async (id: string): Promise<{ success: boolean }> 
 export const getCategories = async (): Promise<MenuCategory[]> => {
   try {
     const response = await apiClient.get<MenuCategory[]>('/menu/categories');
+    
+    // Update WebSocket mock data
+    webSocketService.updateMockData('menu_categories_updated', response.data);
+    
     return response.data;
   } catch (error) {
     console.error('Error fetching menu categories:', error);

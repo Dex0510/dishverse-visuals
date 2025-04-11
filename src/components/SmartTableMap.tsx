@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Table } from '@/services/tableService';
 import { WaitlistEntry } from '@/services/waitlistService';
-import webSocketService from '@/services/webSocketService';
+import { useWebSocketData } from '@/hooks/useWebSocketData';
 
 interface SmartTableMapProps {
   tables: Table[];
@@ -9,24 +10,8 @@ interface SmartTableMapProps {
 }
 
 const SmartTableMap: React.FC<SmartTableMapProps> = ({ tables: initialTables, activeWaitlist }) => {
-  const [tables, setTables] = useState<Table[]>(initialTables);
-  
-  useEffect(() => {
-    setTables(initialTables);
-  }, [initialTables]);
-  
-  useEffect(() => {
-    // Subscribe to real-time table updates
-    const handleTableUpdate = (updatedTables: Table[]) => {
-      setTables(updatedTables);
-    };
-    
-    webSocketService.addEventListener('table_status_update', handleTableUpdate);
-    
-    return () => {
-      webSocketService.removeEventListener('table_status_update', handleTableUpdate);
-    };
-  }, []);
+  // Use WebSocketData hook to get real-time table updates
+  const tables = useWebSocketData<Table[]>('table_status_update', initialTables);
   
   return (
     <div className="grid grid-cols-3 gap-2">

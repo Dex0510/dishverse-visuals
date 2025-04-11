@@ -23,6 +23,7 @@ import DishForm from "@/components/DishForm";
 import DishVisualizer from "@/components/DishVisualizer";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { menuAPI } from "@/services/restaurantService";
+import { useWebSocketData } from "@/hooks/useWebSocketData";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,16 +36,19 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const DishManagement = () => {
-  const [dishes, setDishes] = useState<Dish[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
   const [deletingDishId, setDeletingDishId] = useState<string | null>(null);
+  const [initialDishes, setInitialDishes] = useState<Dish[]>([]);
   
-  // Load all dishes and categories on component mount
+  // Use WebSocket for real-time dish updates with fallback to getAllDishes
+  const dishes = useWebSocketData<Dish[]>('dishes_updated', initialDishes, getAllDishes);
+  
+  // Load dishes and categories on component mount
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -53,7 +57,7 @@ const DishManagement = () => {
         
         // Load dishes
         const fetchedDishes = await getAllDishes();
-        setDishes(fetchedDishes);
+        setInitialDishes(fetchedDishes);
         
         // Load categories
         try {
@@ -92,7 +96,7 @@ const DishManagement = () => {
     const addDish = async () => {
       try {
         const newDish = await createDish(dish);
-        setDishes([...dishes, newDish]);
+        // No need to manually update state as WebSocket will handle it
         setFormOpen(false);
         toast.success(`${newDish.name} has been added to the menu`);
       } catch (err) {
@@ -110,7 +114,7 @@ const DishManagement = () => {
     const updateDishItem = async () => {
       try {
         const updatedDish = await updateDish(editingDish.id, dish);
-        setDishes(dishes.map(d => d.id === editingDish.id ? updatedDish : d));
+        // No need to manually update state as WebSocket will handle it
         setFormOpen(false);
         setEditingDish(null);
         toast.success(`${updatedDish.name} has been updated`);
@@ -128,7 +132,7 @@ const DishManagement = () => {
     
     try {
       await deleteDish(deletingDishId);
-      setDishes(dishes.filter(d => d.id !== deletingDishId));
+      // No need to manually update state as WebSocket will handle it
       toast.success("Dish has been deleted");
     } catch (err) {
       console.error("Failed to delete dish:", err);
