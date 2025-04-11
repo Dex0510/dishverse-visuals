@@ -399,11 +399,11 @@ const FloorEditor: React.FC<FloorEditorProps> = ({
   };
   
   const handleZoomIn = () => {
-    setZoomLevel(prev => Math.min(prev + 0.1, 2));
+    setZoomLevel((prev: number) => Math.min(prev + 0.1, 2));
   };
   
   const handleZoomOut = () => {
-    setZoomLevel(prev => Math.max(prev - 0.1, 0.5));
+    setZoomLevel((prev: number) => Math.max(prev - 0.1, 0.5));
   };
   
   // Guest and staff agent components
