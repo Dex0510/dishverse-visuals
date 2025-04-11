@@ -11,7 +11,7 @@ import SmartTableMap from '@/components/SmartTableMap';
 import { useEffect } from 'react';
 import { getTables } from '@/services/tableService';
 import { Table } from '@/services/tableService';
-import { getWaitlistEntries } from '@/services/waitlistService';
+import { getWaitlist } from '@/services/waitlistService';
 import { WaitlistEntry } from '@/services/waitlistService';
 import { toast } from 'sonner';
 
@@ -31,7 +31,7 @@ const RestaurantMapPage = () => {
         setTables(tablesData);
         
         // Load waitlist
-        const waitlistData = await getWaitlistEntries();
+        const waitlistData = await getWaitlist();
         setWaitlist(waitlistData.filter(entry => entry.status === 'waiting'));
       } catch (error) {
         console.error("Failed to load restaurant data:", error);
@@ -166,7 +166,7 @@ const RestaurantMapPage = () => {
                   {waitlist.slice(0, 3).map(entry => (
                     <div key={entry.id} className="text-sm flex justify-between items-center py-1">
                       <span>{entry.customerName} ({entry.partySize})</span>
-                      <span className="text-xs">{entry.waitTime}m</span>
+                      <span className="text-xs">{entry.estimatedWaitTime}m</span>
                     </div>
                   ))}
                   {waitlist.length > 3 && (
