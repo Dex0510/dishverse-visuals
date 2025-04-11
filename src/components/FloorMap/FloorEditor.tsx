@@ -399,11 +399,13 @@ const FloorEditor: React.FC<FloorEditorProps> = ({
   };
   
   const handleZoomIn = () => {
-    setZoomLevel((prev: number) => Math.min(prev + 0.1, 2));
+    // Fix: Using direct value update instead of functional update
+    setZoomLevel(Math.min(zoomLevel + 0.1, 2));
   };
   
   const handleZoomOut = () => {
-    setZoomLevel((prev: number) => Math.max(prev - 0.1, 0.5));
+    // Fix: Using direct value update instead of functional update
+    setZoomLevel(Math.max(zoomLevel - 0.1, 0.5));
   };
   
   // Guest and staff agent components
