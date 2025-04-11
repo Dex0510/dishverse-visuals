@@ -14,6 +14,7 @@ import { Table } from '@/services/tableService';
 import { getWaitlist } from '@/services/waitlistService';
 import { WaitlistEntry } from '@/services/waitlistService';
 import { toast } from 'sonner';
+import webSocketService from '@/services/webSocketService';
 
 const RestaurantMapPage = () => {
   const navigate = useNavigate();
@@ -43,10 +44,33 @@ const RestaurantMapPage = () => {
 
     loadData();
     
-    // Set up polling for live updates every 30 seconds
-    const intervalId = setInterval(loadData, 30000);
+    // Connect to WebSocket for real-time updates
+    webSocketService.connect().catch(error => {
+      console.error("Failed to connect to WebSocket:", error);
+      toast.error("Failed to connect to real-time updates. Falling back to polling.");
+      
+      // Fall back to polling if WebSocket connection fails
+      const intervalId = setInterval(loadData, 30000);
+      return () => clearInterval(intervalId);
+    });
     
-    return () => clearInterval(intervalId);
+    // Set up event listeners for WebSocket updates
+    const handleTableUpdate = (updatedTables: Table[]) => {
+      setTables(updatedTables);
+    };
+    
+    const handleWaitlistUpdate = (updatedWaitlist: WaitlistEntry[]) => {
+      setWaitlist(updatedWaitlist.filter(entry => entry.status === 'waiting'));
+    };
+    
+    webSocketService.addEventListener('table_status_update', handleTableUpdate);
+    webSocketService.addEventListener('waitlist_update', handleWaitlistUpdate);
+    
+    // Clean up
+    return () => {
+      webSocketService.removeEventListener('table_status_update', handleTableUpdate);
+      webSocketService.removeEventListener('waitlist_update', handleWaitlistUpdate);
+    };
   }, []);
 
   return (

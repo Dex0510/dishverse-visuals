@@ -1,6 +1,7 @@
 
 import axios from 'axios';
 import setupMockMiddleware from './mockMiddleware';
+import webSocketService from './webSocketService';
 
 // Base API URL - in a real app, this would be in an environment variable
 const API_URL = 'http://localhost:8000';
@@ -35,6 +36,13 @@ apiClient.interceptors.response.use(
     // If the error doesn't have a response, it's a network error
     if (!error.response) {
       console.error('Network error or server unreachable.');
+      
+      // If WebSocket is connected, we might still get updates
+      // Try to reconnect WebSocket if it's disconnected
+      webSocketService.connect().catch(() => {
+        // Silent catch - the WebSocketService handles reconnection internally
+      });
+      
       return Promise.reject(
         new Error('Cannot connect to server. Please check your internet connection.')
       );
@@ -69,5 +77,14 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Initialize WebSocket connection when API client is first used
+apiClient.interceptors.request.use((config) => {
+  // Try to establish WebSocket connection when first API request is made
+  webSocketService.connect().catch(() => {
+    // Silent catch - the WebSocketService handles reconnection internally
+  });
+  return config;
+});
 
 export default apiClient;

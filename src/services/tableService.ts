@@ -1,5 +1,5 @@
-
 import apiClient from './api';
+import webSocketService from './webSocketService';
 
 export interface Table {
   id: string;
@@ -85,6 +85,10 @@ export const updateReservation = async (id: string, data: Partial<Reservation>):
 export const updateTableStatus = async (id: string, status: Table['status']): Promise<Table> => {
   try {
     const response = await apiClient.patch<Table>(`/tables/${id}/status`, { status });
+    
+    // Emit the update via WebSocket as well
+    webSocketService.sendMessage('table_status_update', { tableId: id, status });
+    
     return response.data;
   } catch (error) {
     console.error(`Error updating table ${id} status:`, error);
@@ -95,6 +99,10 @@ export const updateTableStatus = async (id: string, status: Table['status']): Pr
 export const assignTableToOrder = async (tableId: string, orderId: string): Promise<Table> => {
   try {
     const response = await apiClient.patch<Table>(`/tables/${tableId}/assign-order`, { orderId });
+    
+    // Emit the update via WebSocket as well
+    webSocketService.sendMessage('table_status_update', { tableId, orderId });
+    
     return response.data;
   } catch (error) {
     console.error(`Error assigning order to table ${tableId}:`, error);
