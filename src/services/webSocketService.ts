@@ -6,10 +6,17 @@ export type WebSocketEventType =
   | 'table_status_update' 
   | 'waitlist_update' 
   | 'order_update'
-  | 'occupancy_update';
+  | 'occupancy_update'
+  | 'menu_items_updated'
+  | 'menu_item_updated'
+  | 'menu_item_created'
+  | 'menu_item_deleted'
+  | 'menu_categories_updated'
+  | 'dishes_updated';
 
 // Type for event listeners
 type EventListener = (data: any) => void;
+type ConnectionListener = () => void;
 
 class WebSocketService {
   private socket: WebSocket | null = null;
@@ -19,10 +26,23 @@ class WebSocketService {
   private maxReconnectAttempts: number = 5;
   private reconnectTimeout: number = 2000; // Start with 2 seconds
   private eventListeners: Map<WebSocketEventType, EventListener[]> = new Map();
+  private connectionListeners: Map<string, ConnectionListener[]> = new Map();
+  private mockData: Map<WebSocketEventType, any> = new Map();
+  private registeredEventTypes: Set<WebSocketEventType> = new Set();
 
   constructor() {
     // In a real app, this would come from environment variables
     this.url = 'ws://localhost:8080';
+    
+    // Initialize connection listeners
+    this.connectionListeners.set('connected', []);
+    this.connectionListeners.set('disconnected', []);
+    
+    // Register default event types
+    this.registeredEventTypes.add('table_status_update');
+    this.registeredEventTypes.add('waitlist_update');
+    this.registeredEventTypes.add('order_update');
+    this.registeredEventTypes.add('occupancy_update');
   }
 
   // Connect to the WebSocket server
@@ -45,12 +65,14 @@ class WebSocketService {
           console.log('WebSocket connection established');
           this.isConnecting = false;
           this.reconnectAttempts = 0;
+          this.notifyConnectionListeners('connected');
           resolve();
         };
 
         this.socket.onclose = (event) => {
           console.log('WebSocket connection closed', event);
           this.socket = null;
+          this.notifyConnectionListeners('disconnected');
           this.handleReconnect();
         };
 
@@ -82,6 +104,11 @@ class WebSocketService {
     });
   }
 
+  // Check if WebSocket is connected
+  isConnected(): boolean {
+    return this.socket !== null && this.socket.readyState === WebSocket.OPEN;
+  }
+
   // Attempt to reconnect with exponential backoff
   private handleReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
@@ -110,6 +137,11 @@ class WebSocketService {
     }
   }
 
+  // Register event type for WebSocket
+  registerEventType(eventType: WebSocketEventType): void {
+    this.registeredEventTypes.add(eventType);
+  }
+
   // Add event listener
   addEventListener(event: WebSocketEventType, listener: EventListener): void {
     if (!this.eventListeners.has(event)) {
@@ -129,6 +161,36 @@ class WebSocketService {
     }
   }
 
+  // Add connection listener
+  addConnectionListener(event: 'connected' | 'disconnected', listener: ConnectionListener): void {
+    this.connectionListeners.get(event)?.push(listener);
+  }
+
+  // Remove connection listener
+  removeConnectionListener(event: 'connected' | 'disconnected', listener: ConnectionListener): void {
+    const listeners = this.connectionListeners.get(event);
+    if (listeners) {
+      const index = listeners.indexOf(listener);
+      if (index !== -1) {
+        listeners.splice(index, 1);
+      }
+    }
+  }
+
+  // Notify connection listeners
+  private notifyConnectionListeners(event: 'connected' | 'disconnected'): void {
+    const listeners = this.connectionListeners.get(event);
+    if (listeners) {
+      listeners.forEach(listener => {
+        try {
+          listener();
+        } catch (error) {
+          console.error(`Error in ${event} connection listener:`, error);
+        }
+      });
+    }
+  }
+
   // Dispatch event to all listeners
   private dispatchEvent(event: WebSocketEventType, data: any): void {
     const listeners = this.eventListeners.get(event);
@@ -141,6 +203,16 @@ class WebSocketService {
         }
       });
     }
+  }
+
+  // Update mock data for an event type (for testing and development)
+  updateMockData(eventType: WebSocketEventType, data: any): void {
+    this.mockData.set(eventType, data);
+  }
+
+  // Get mock data for an event type
+  getMockData(eventType: WebSocketEventType): any {
+    return this.mockData.get(eventType);
   }
 
   // Send message to the server
